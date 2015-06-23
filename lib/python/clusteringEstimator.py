@@ -49,4 +49,7 @@ class gmmEstimator:
         setEstimatorSettings(nCluster)
 
         self.estimator.fit(data)
+
+        # TODO: Cut off a Gaussian
+        #       if its self.estimator.weights_ is low.
         return self.estimator.means_
