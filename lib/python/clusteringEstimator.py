@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 import numpy as np
-from sklearn import cluster
+from sklearn import cluster, mixture
 
 # Log file setting.
 # import logging
@@ -34,3 +34,19 @@ class kmeansEstimator:
 
         self.estimator.fit(data)
         return self.estimator.cluster_centers_
+
+class gmmEstimator:
+    def __init__(self):
+        self.nCluster  = None
+        self.estimator = None
+
+    def setEstimatorSettings(self, nCluster):
+        if self.nCluster is not nCluster:
+            self.nCluster = nCluster
+            self.estimator = mixture.GMM(n_components=nCluster)
+
+    def getCentroids(self, data, nCluster):
+        setEstimatorSettings(nCluster)
+
+        self.estimator.fit(data)
+        return self.estimator.means_
