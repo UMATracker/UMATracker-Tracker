@@ -256,7 +256,7 @@ class Ui_MainWindow(Ui_MainWindowBase):
         if self.filterFunction is not None:
             img = self.filterFunction(self.cv_img.copy())
 
-            nonZeroPos = np.transpose(np.nonzero(img))
+            nonZeroPos = np.transpose(np.nonzero(np.transpose(img)))
 
             # TODO: Implement other estimator
             # http://scikit-learn.org/stable/modules/classes.html#module-sklearn.mixture
@@ -273,8 +273,7 @@ class Ui_MainWindow(Ui_MainWindowBase):
             # Plot circle to self.cv_img
             img = self.cv_img.copy()
             for p in centerPos:
-                print(p)
-                cv2.circle(img, tuple(np.int64(p[::-1])), 10, (0,255,0), -1)
+                cv2.circle(img, tuple(np.int64(p)), 10, (0,255,0), -1)
 
             self.outputScene.clear()
             qimg = misc.cvMatToQImage(img)
