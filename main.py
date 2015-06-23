@@ -9,7 +9,7 @@ from PyQt5.QtGui import QPixmap, QImage
 
 import cv2
 import numpy as np
-import sklearn
+from sklearn import cluster
 
 import filePath
 
@@ -254,9 +254,9 @@ class Ui_MainWindow(Ui_MainWindowBase):
 
     def evaluate(self):
         if self.filterFunction is not None:
-            img = self.filterFunction(self.cv_img)
+            img = self.filterFunction(self.cv_img.copy())
 
-            nonZeroPos = np.nonzero(img)
+            nonZeroPos = np.transpose(np.nonzero(img))
 
             # TODO: Implement other estimator
             # http://scikit-learn.org/stable/modules/classes.html#module-sklearn.mixture
@@ -264,7 +264,7 @@ class Ui_MainWindow(Ui_MainWindowBase):
             # http://scikit-learn.org/stable/modules/dp-derivation.html
 
             # n_jobsでCPUの数を指定できる
-            estimator = sklearn.cluster.k_means(self.clusterSizeNumSpinBox.value(), n_jobs=self.cpuCoreNumSpinBox.value())
+            estimator = cluster.KMeans(n_clusters=self.clusterSizeNumSpinBox.value(), n_jobs=self.cpuCoreNumSpinBox.value())
             estimator.fit(nonZeroPos)
 
             centerPos = estimator.cluster_centers_
@@ -273,7 +273,8 @@ class Ui_MainWindow(Ui_MainWindowBase):
             # Plot circle to self.cv_img
             img = self.cv_img.copy()
             for p in centerPos:
-                cv2.circle(img, p, 10, (0,0,255))
+                print(p)
+                cv2.circle(img, tuple(np.int64(p[::-1])), 10, (0,255,0), -1)
 
             self.outputScene.clear()
             qimg = misc.cvMatToQImage(img)
