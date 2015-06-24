@@ -15,6 +15,7 @@ import filePath
 
 sys.path.append( filePath.pythonLibDirPath )
 import misc
+import clusteringEstimator
 
 sys.path.append( os.path.join(filePath.pythonLibDirPath, 'pycv') )
 import filters
@@ -43,8 +44,13 @@ class Ui_MainWindow(Ui_MainWindowBase):
         self.videoPlaybackInit()
         self.imgInit()
         self.menuInit()
+        self.clusteringEstimatorInit()
 
         self.filterFunction = None
+
+    def clusteringEstimatorInit(self):
+        self.Kmeans = clusteringEstimator.kmeansEstimator()
+        self.GMM = clusteringEstimator.gmmEstimator()
 
     def videoPlaybackInit(self):
         self.videoPlaybackWidget.hide()
@@ -264,11 +270,17 @@ class Ui_MainWindow(Ui_MainWindowBase):
             # http://scikit-learn.org/stable/modules/dp-derivation.html
 
             # n_jobsでCPUの数を指定できる
-            estimator = cluster.KMeans(n_clusters=self.clusterSizeNumSpinBox.value(), n_jobs=self.cpuCoreNumSpinBox.value())
-            estimator.fit(nonZeroPos)
+            # estimator = cluster.KMeans(n_clusters=self.clusterSizeNumSpinBox.value(), n_jobs=self.cpuCoreNumSpinBox.value())
+            # estimator.fit(nonZeroPos)
 
-            centerPos = estimator.cluster_centers_
-            labels    = estimator.labels_
+            method = misc.utfToSystemStr(self.clusteringMethodComboBox.currentText())
+            print(method)
+
+            centerPos = None
+            if method == 'K-means':
+                centerPos = self.Kmeans.getCentroids(nonZeroPos, self.clusterSizeNumSpinBox.value())
+            elif method == 'GMM':
+                centerPos = self.GMM.getCentroids(nonZeroPos, self.clusterSizeNumSpinBox.value())
 
             # Plot circle to self.cv_img
             img = self.cv_img.copy()
