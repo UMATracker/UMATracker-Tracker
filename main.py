@@ -217,6 +217,8 @@ class Ui_MainWindow(Ui_MainWindowBase):
                 self.cv_img = frame
                 self.updateInputGraphicsView()
 
+                self.evaluate()
+
     def openImageFile(self):
         filename, _ = QFileDialog.getOpenFileName(None, 'Open Image File', filePath.userDir)
 
@@ -226,6 +228,8 @@ class Ui_MainWindow(Ui_MainWindowBase):
 
             self.updateInputGraphicsView()
             self.releaseVideoCapture()
+
+            self.evaluate()
 
     def openFilterSettingFile(self):
         filename, _ = QFileDialog.getOpenFileName(None, 'Open Filter Setting File', filePath.userDir)
