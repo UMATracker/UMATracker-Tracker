@@ -20,17 +20,15 @@ logger.addHandler(handler)
 class kmeansEstimator:
     def __init__(self):
         self.nCluster  = None
-        self.nJobs     = None
         self.estimator = None
 
-    def setEstimatorSettings(self, nCluster, nJobs):
-        if (self.nCluster is not nCluster) or (self.nJobs is not nJobs):
+    def setEstimatorSettings(self, nCluster):
+        if self.nCluster is not nCluster:
             self.nCluster = nCluster
-            self.nJobs    = nJobs
-            self.estimator = cluster.KMeans(n_clusters=nCluster, n_jobs=nJobs)
+            self.estimator = cluster.KMeans(n_clusters=nCluster)
 
-    def getCentroids(self, data, nCluster, nJobs):
-        setEstimatorSettings(nCluster, nJobs)
+    def getCentroids(self, data, nCluster):
+        self.setEstimatorSettings(nCluster)
 
         self.estimator.fit(data)
         return self.estimator.cluster_centers_
@@ -46,7 +44,7 @@ class gmmEstimator:
             self.estimator = mixture.GMM(n_components=nCluster)
 
     def getCentroids(self, data, nCluster):
-        setEstimatorSettings(nCluster)
+        self.setEstimatorSettings(nCluster)
 
         self.estimator.fit(data)
 
