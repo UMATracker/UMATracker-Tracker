@@ -274,7 +274,6 @@ class Ui_MainWindow(Ui_MainWindowBase):
             # estimator.fit(nonZeroPos)
 
             method = misc.utfToSystemStr(self.clusteringMethodComboBox.currentText())
-            print(method)
 
             centerPos = None
             if method == 'K-means':
