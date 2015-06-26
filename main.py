@@ -46,7 +46,7 @@ class Ui_MainWindow(Ui_MainWindowBase):
         self.menuInit()
         self.clusteringEstimatorInit()
 
-        self.filterFunction = None
+        self.filter = None
 
     def clusteringEstimatorInit(self):
         self.Kmeans = clusteringEstimator.kmeansEstimator()
@@ -217,6 +217,10 @@ class Ui_MainWindow(Ui_MainWindowBase):
                 self.cv_img = frame
                 self.updateInputGraphicsView()
 
+                try:
+                    self.filter = filterOperation(self.cv_img)
+                except Exception as e:
+                    logger.debug("No filter class Error: {0}".format(e))
                 self.evaluate()
 
     def openImageFile(self):
@@ -229,16 +233,20 @@ class Ui_MainWindow(Ui_MainWindowBase):
             self.updateInputGraphicsView()
             self.releaseVideoCapture()
 
+            try:
+                self.filter = filterOperation(self.cv_img)
+            except Exception as e:
+                logger.debug("No filter class Error: {0}".format(e))
             self.evaluate()
 
     def openFilterSettingFile(self):
-        filename, _ = QFileDialog.getOpenFileName(None, 'Open Filter Setting File', filePath.userDir)
+        filename, _ = QFileDialog.getOpenFileName(None, 'Open Filter Setting File', filePath.userDir, "Filter files (*.filter)")
         if len(filename) is not 0:
             with open(filename) as f:
                 txt = f.read()
 
             exec(txt)
-            self.filterFunction = filterFunc
+            self.filter = filterOperation(self.cv_img)
 
             self.evaluate()
 
@@ -263,8 +271,8 @@ class Ui_MainWindow(Ui_MainWindowBase):
         self.outputGraphicsView.fitInView(self.outputScene.sceneRect(), QtCore.Qt.KeepAspectRatio)
 
     def evaluate(self):
-        if self.filterFunction is not None:
-            img = self.filterFunction(self.cv_img.copy())
+        if self.filter is not None:
+            img = self.filter.filterFunc(self.cv_img.copy())
 
             nonZeroPos = np.transpose(np.nonzero(np.transpose(img)))
 
