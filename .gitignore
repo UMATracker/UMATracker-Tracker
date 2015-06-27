@@ -4,3 +4,5 @@ user/
 *.pyc
 Thumbs.db
 *.log
+*~
+*.swp
