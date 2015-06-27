@@ -52,6 +52,8 @@ class Ui_MainWindow(Ui_MainWindowBase):
         self.Kmeans = clusteringEstimator.kmeansEstimator()
         self.GMM = clusteringEstimator.gmmEstimator()
 
+        self.evaluateButton.pressed.connect(self.evaluate)
+
     def videoPlaybackInit(self):
         self.videoPlaybackWidget.hide()
 

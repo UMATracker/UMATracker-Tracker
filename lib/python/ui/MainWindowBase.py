@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file '.\MainWindowBase.ui'
 #
-# Created by: PyQt5 UI code generator 5.4.1
+# Created by: PyQt5 UI code generator 5.4.2
 #
 # WARNING! All changes made in this file will be lost!
 
@@ -11,7 +11,7 @@ from PyQt5 import QtCore, QtGui, QtWidgets
 class Ui_MainWindowBase(object):
     def setupUi(self, MainWindowBase):
         MainWindowBase.setObjectName("MainWindowBase")
-        MainWindowBase.resize(592, 552)
+        MainWindowBase.resize(888, 552)
         self.centralwidget = QtWidgets.QWidget(MainWindowBase)
         self.centralwidget.setObjectName("centralwidget")
         self.gridLayout = QtWidgets.QGridLayout(self.centralwidget)
@@ -20,7 +20,6 @@ class Ui_MainWindowBase(object):
         self.gridWidget = QtWidgets.QWidget(self.centralwidget)
         self.gridWidget.setObjectName("gridWidget")
         self.horizontalLayout = QtWidgets.QHBoxLayout(self.gridWidget)
-        self.horizontalLayout.setContentsMargins(0, 0, 0, 0)
         self.horizontalLayout.setObjectName("horizontalLayout")
         self.graphicsBox = QtWidgets.QGroupBox(self.gridWidget)
         sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Preferred, QtWidgets.QSizePolicy.Preferred)
@@ -45,7 +44,6 @@ class Ui_MainWindowBase(object):
         self.videoPlaybackWidget = QtWidgets.QWidget(self.graphicsBox)
         self.videoPlaybackWidget.setObjectName("videoPlaybackWidget")
         self.verticalLayout_7 = QtWidgets.QVBoxLayout(self.videoPlaybackWidget)
-        self.verticalLayout_7.setContentsMargins(0, 0, 0, 0)
         self.verticalLayout_7.setObjectName("verticalLayout_7")
         self.videoPlaybackButtons = QtWidgets.QHBoxLayout()
         self.videoPlaybackButtons.setObjectName("videoPlaybackButtons")
@@ -129,13 +127,21 @@ class Ui_MainWindowBase(object):
         self.cpuCoreNumSpinBox.setObjectName("cpuCoreNumSpinBox")
         self.horizontalLayout_4.addWidget(self.cpuCoreNumSpinBox)
         self.verticalLayout.addLayout(self.horizontalLayout_4)
-        spacerItem = QtWidgets.QSpacerItem(20, 40, QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Expanding)
-        self.verticalLayout.addItem(spacerItem)
+        self.horizontalLayout_5 = QtWidgets.QHBoxLayout()
+        self.horizontalLayout_5.setObjectName("horizontalLayout_5")
+        spacerItem = QtWidgets.QSpacerItem(40, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
+        self.horizontalLayout_5.addItem(spacerItem)
+        self.evaluateButton = QtWidgets.QPushButton(self.groupBox)
+        self.evaluateButton.setObjectName("evaluateButton")
+        self.horizontalLayout_5.addWidget(self.evaluateButton)
+        self.verticalLayout.addLayout(self.horizontalLayout_5)
+        spacerItem1 = QtWidgets.QSpacerItem(20, 40, QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Expanding)
+        self.verticalLayout.addItem(spacerItem1)
         self.horizontalLayout.addWidget(self.groupBox, QtCore.Qt.AlignLeft|QtCore.Qt.AlignTop)
         self.gridLayout.addWidget(self.gridWidget, 0, 0, 1, 1)
         MainWindowBase.setCentralWidget(self.centralwidget)
         self.menubar = QtWidgets.QMenuBar(MainWindowBase)
-        self.menubar.setGeometry(QtCore.QRect(0, 0, 592, 21))
+        self.menubar.setGeometry(QtCore.QRect(0, 0, 888, 29))
         self.menubar.setObjectName("menubar")
         self.menuFiles = QtWidgets.QMenu(self.menubar)
         self.menuFiles.setObjectName("menuFiles")
@@ -180,6 +186,7 @@ class Ui_MainWindowBase(object):
         self.clusteringMethodComboBox.setItemText(1, _translate("MainWindowBase", "GMM"))
         self.label.setText(_translate("MainWindowBase", "Cluster size:"))
         self.label_2.setText(_translate("MainWindowBase", "CPU Core:"))
+        self.evaluateButton.setText(_translate("MainWindowBase", "Evaluate"))
         self.menuFiles.setTitle(_translate("MainWindowBase", "Files"))
         self.actionOpenVideo.setText(_translate("MainWindowBase", "Open Video"))
         self.actionOpenImage.setText(_translate("MainWindowBase", "Open Image"))
