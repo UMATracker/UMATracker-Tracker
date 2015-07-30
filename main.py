@@ -16,6 +16,7 @@ import filePath
 sys.path.append( filePath.pythonLibDirPath )
 import misc
 import clusteringEstimator
+from rmot import RMOT
 
 sys.path.append( os.path.join(filePath.pythonLibDirPath, 'pycv') )
 import filters
@@ -47,6 +48,7 @@ class Ui_MainWindow(Ui_MainWindowBase):
         self.clusteringEstimatorInit()
 
         self.filter = None
+        self.rmot   = None
 
     def clusteringEstimatorInit(self):
         self.Kmeans = clusteringEstimator.kmeansEstimator()
@@ -290,15 +292,43 @@ class Ui_MainWindow(Ui_MainWindowBase):
             method = misc.utfToSystemStr(self.clusteringMethodComboBox.currentText())
 
             centerPos = None
+            windows   = None
             if method == 'K-means':
-                centerPos = self.Kmeans.getCentroids(nonZeroPos, self.clusterSizeNumSpinBox.value())
+                centerPos, windows = self.Kmeans.getCentroids(nonZeroPos, self.clusterSizeNumSpinBox.value())
             elif method == 'GMM':
                 centerPos = self.GMM.getCentroids(nonZeroPos, self.clusterSizeNumSpinBox.value())
 
             # Plot circle to self.cv_img
             img = self.cv_img.copy()
-            for p in centerPos:
-                cv2.circle(img, tuple(np.int64(p)), 10, (0,255,0), -1)
+            windows = 7*windows
+            for p, w in zip(centerPos, windows):
+                cv2.rectangle(img, tuple(np.int64(p-w)), tuple(np.int64(p+w)), (0,255,0), 1)
+                # cv2.circle(img, tuple(np.int64(p)), 10, (0,255,0), -1)
+
+            if self.rmot == None:
+                xs = np.concatenate((centerPos, np.zeros((centerPos.shape[0],2)), windows), axis=1)
+                self.rmot = RMOT(xs)
+            else:
+                try:
+                    zs = np.concatenate((centerPos,windows), axis=1)
+                    res = self.rmot.calculation(zs)
+
+                    color = [
+                        (255,0,0),
+                        (0,255,0),
+                        (0,0,255),
+                        (128,128,0),
+                        (0,128,128),
+                        (128,0,128),
+                        (128,128,128),
+                        (64,0,0),
+                        (0,64,0),
+                        (0,0,64)
+                        ]
+                    for p,c in zip(res,color):
+                        cv2.circle(img, tuple(np.int64(p[:2])), 10, c, -1)
+                except Warning:
+                    print("foo")
 
             self.outputScene.clear()
             qimg = misc.cvMatToQImage(img)
