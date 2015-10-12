@@ -192,36 +192,45 @@ class Ui_MainWindow(Ui_MainWindowBase):
 
     def evaluate(self):
         if self.filter is not None:
+            cv2.imwrite('fg.png', self.cv_img)
             img = self.filter.filterFunc(self.cv_img.copy())
+            cv2.imwrite('bg.png', img)
 
             nonZeroPos = np.transpose(np.nonzero(np.transpose(img)))
 
             # TODO: Implement other estimator
             # http://scikit-learn.org/stable/modules/classes.html#module-sklearn.mixture
             # https://en.wikipedia.org/wiki/Variational_Bayesian_methods
-            # http://scikit-learn.org/stable/modules/dp-derivation.html
 
             # n_jobsでCPUの数を指定できる
             # estimator = cluster.KMeans(n_clusters=self.clusterSizeNumSpinBox.value(), n_jobs=self.cpuCoreNumSpinBox.value())
             # estimator.fit(nonZeroPos)
 
             method = self.clusteringMethodComboBox.currentText()
+            N = self.clusterSizeNumSpinBox.value()
 
             centerPos = None
             windows   = None
             if method == 'K-means':
-                centerPos, windows = self.Kmeans.getCentroids(nonZeroPos, self.clusterSizeNumSpinBox.value())
+                centerPos, windows = self.Kmeans.getCentroids(nonZeroPos, N)
             elif method == 'GMM':
-                centerPos = self.GMM.getCentroids(nonZeroPos, self.clusterSizeNumSpinBox.value())
+                centerPos = self.GMM.getCentroids(nonZeroPos, N)
 
             # Plot circle to self.cv_img
             img = self.cv_img.copy()
-            windows = 7*windows
+            # windows = 7*windows
+
+            # windows[:] = 40
+            # windows[:, 1] = 15
+
+            windows[:] = 15
             for p, w in zip(centerPos, windows):
                 cv2.rectangle(img, tuple(np.int64(p-w)), tuple(np.int64(p+w)), (0,255,0), 1)
                 # cv2.circle(img, tuple(np.int64(p)), 10, (0,255,0), -1)
 
-            if self.rmot == None:
+            if self.rmot is None:
+                self.coords = [[] for i in range(N)]
+                self.colors = np.random.randint(0, 255, (N, 3)).tolist()
                 xs = np.concatenate((centerPos, np.zeros((centerPos.shape[0],2)), windows), axis=1)
                 self.rmot = RMOT(xs)
             else:
@@ -229,20 +238,15 @@ class Ui_MainWindow(Ui_MainWindowBase):
                     zs = np.concatenate((centerPos,windows), axis=1)
                     res = self.rmot.calculation(zs)
 
-                    color = [
-                        (255,0,0),
-                        (0,255,0),
-                        (0,0,255),
-                        (128,128,0),
-                        (0,128,128),
-                        (128,0,128),
-                        (128,128,128),
-                        (64,0,0),
-                        (0,64,0),
-                        (0,0,64)
-                        ]
-                    for p,c in zip(res,color):
-                        cv2.circle(img, tuple(np.int64(p[:2])), 10, c, -1)
+                    for coord, p, color in zip(self.coords, res, self.colors):
+                        coord.append(tuple(np.int32(p.copy())[:2]))
+                        cv2.circle(img, tuple(np.int32(p.copy())[:2])[:2], 5, color, -1)
+                    # print(self.coords)
+
+                    # for coord, color in zip(self.coords, self.colors):
+                    #     for pp in coord:
+                    #         cv2.circle(img, pp[:2], 5, color, -1)
+                    # cv2.imwrite('track.png', img)
                 except Warning:
                     print("foo")
 
