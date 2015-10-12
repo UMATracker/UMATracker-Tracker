@@ -90,128 +90,16 @@ class Ui_MainWindow(Ui_MainWindowBase):
 
     def videoPlaybackInit(self):
         self.videoPlaybackWidget.hide()
+        self.videoPlaybackWidget.frameChanged.connect(self.setFrame)
 
-        self.videoPlayStopButton.clicked.connect(self.videoPlayStopButtonClicked)
-        self.videoGoHeadButton.clicked.connect(self.videoGoHeadButtonClicked)
-        self.videoGoLastButton.clicked.connect(self.videoGoLastButtonClicked)
-
-        self.videoGoForwardButton.clicked.connect(self.videoGoForwardButtonClicked)
-        self.videoGoBackwardButton.clicked.connect(self.videoGoBackwardButtonClicked)
-        self.videoGoForwardButton.setAutoRepeat(True)
-        self.videoGoBackwardButton.setAutoRepeat(True)
-        self.videoGoForwardButton.setAutoRepeatInterval(10)
-        self.videoGoBackwardButton.setAutoRepeatInterval(10)
-
-        self.videoPlaybackSlider.actionTriggered.connect(self.videoPlaybackSliderActionTriggered)
-
-        self.videoPlaybackTimer = QtCore.QTimer(parent=self.videoPlaybackWidget)
-        self.videoPlaybackTimer.timeout.connect(self.videoPlayback)
-
-    def videoPlayStopButtonClicked(self):
-        if self.videoPlaybackTimer.isActive():
-            self.videoPlaybackTimer.stop()
-        else:
-            maxFrames = int(self.cap.get(cv2.CAP_PROP_FRAME_COUNT))
-
-            if self.videoPlaybackSlider.value() is not maxFrames:
-                self.fps = int(self.cap.get(cv2.CAP_PROP_FPS))
-
-                self.videoPlaybackTimer.setInterval(1000.0/self.fps)
-                self.videoPlaybackTimer.start()
-
-    def videoGoHeadButtonClicked(self):
-        self.videoPlaybackTimer.stop()
-        if self.cap.isOpened():
-            self.cap.set(cv2.CAP_PROP_POS_FRAMES, 0)
-            ret, frame = self.cap.read()
-
-            self.videoPlaybackSlider.setValue(0)
-
-            self.setFrame(frame)
-
-    def videoGoLastButtonClicked(self):
-        self.videoPlaybackTimer.stop()
-        if self.cap.isOpened():
-            maxFrames = int(self.cap.get(cv2.CAP_PROP_FRAME_COUNT))
-            # TODO: 行儀の悪い映像だと，末尾のあたりの取得に（ここではsetの時点で）失敗・一時フリーズする．
-            #       しかも，これといったエラーが出ずに進行．
-            #       要検証．
-            self.cap.set(cv2.CAP_PROP_POS_FRAMES, maxFrames)
-            ret, frame = self.cap.read()
-
-            self.videoPlaybackSlider.setValue(maxFrames)
-
-            self.setFrame(frame)
-
-    def videoGoForwardButtonClicked(self):
-        self.videoPlaybackTimer.stop()
-        if self.cap.isOpened():
-            nextFrame = int(self.cap.get(cv2.CAP_PROP_POS_FRAMES))
-            maxFrames = int(self.cap.get(cv2.CAP_PROP_FRAME_COUNT))
-
-            if nextFrame <= maxFrames:
-                # TODO: 行儀の悪い映像だと，末尾のあたりの取得に（ここではsetの時点で）失敗・一時フリーズする．
-                #       しかも，これといったエラーが出ずに進行．
-                #       要検証．
-                self.cap.set(cv2.CAP_PROP_POS_FRAMES, nextFrame)
-                ret, frame = self.cap.read()
-
-                self.videoPlaybackSlider.setValue(nextFrame)
-
-                self.setFrame(frame)
-
-    def videoGoBackwardButtonClicked(self):
-        self.videoPlaybackTimer.stop()
-        if self.cap.isOpened():
-            nextFrame = int(self.cap.get(cv2.CAP_PROP_POS_FRAMES))
-            beforeFrame = nextFrame - 2
-            if beforeFrame >= 0:
-                # TODO: 行儀の悪い映像だと，末尾のあたりの取得に（ここではsetの時点で）失敗・一時フリーズする．
-                #       しかも，これといったエラーが出ずに進行．
-                #       要検証．
-                self.cap.set(cv2.CAP_PROP_POS_FRAMES, beforeFrame)
-                ret, frame = self.cap.read()
-
-                self.videoPlaybackSlider.setValue(beforeFrame)
-
-                self.setFrame(frame)
-
-    def videoPlaybackSliderActionTriggered(self, action):
-        logger.debug("Action: {0}".format(action))
-        self.videoPlaybackTimer.stop()
-        if self.cap.isOpened():
-            # TODO: 行儀の悪い映像だと，末尾のあたりの取得に（ここではsetの時点で）失敗・一時フリーズする．
-            #       しかも，これといったエラーが出ずに進行．
-            #       要検証．
-            self.cap.set(cv2.CAP_PROP_POS_FRAMES, self.videoPlaybackSlider.value())
-            ret, frame = self.cap.read()
-
-            self.setFrame(frame)
-
-    def videoPlayback(self):
-        if self.cap.isOpened():
-            nextFrame = int(self.cap.get(cv2.CAP_PROP_POS_FRAMES))
-            # TODO: 行儀の悪い映像だと，末尾のあたりの取得に（ここではreadの時点で）失敗・一時フリーズする．
-            #       しかも，これといったエラーが出ずに進行．
-            #       要検証．
-            ret, frame = self.cap.read()
-
-            if nextFrame%self.fps is 0:
-                self.videoPlaybackSlider.setValue(nextFrame)
-
-            self.setFrame(frame)
 
     def setFrame(self, frame):
         if frame is not None:
             self.cv_img = frame
             self.updateInputGraphicsView()
             self.evaluate()
-        else:
-            self.videoPlaybackSlider.setValue(self.videoPlaybackSlider.maximum())
-            self.videoPlaybackTimer.stop()
 
     def imgInit(self):
-        self.cap = None
         self.cv_img = cv2.imread(os.path.join(filePath.sampleDataPath,"color_filter_test.png"))
 
         self.inputScene = QGraphicsScene()
@@ -232,32 +120,14 @@ class Ui_MainWindow(Ui_MainWindowBase):
 
         self.actionOpenFilterSetting.triggered.connect(self.openFilterSettingFile)
 
-    def releaseVideoCapture(self):
-        if self.cap is not None:
-            self.cap.release()
-            self.cap = None
-
-        if len(filename) is not 0:
-            self.releaseVideoCapture()
-            self.cap = cv2.VideoCapture(misc.utfToSystemStr(filename))
     def openVideoFile(self, activated=False, filePath = None):
         if filePath is None:
             filePath, _ = QFileDialog.getOpenFileName(None, 'Open Video File', userDir)
 
+        if len(filePath) is not 0:
+            self.filePath = filePath
             self.videoPlaybackWidget.show()
-            self.videoPlaybackSlider.setRange(0, self.cap.get(cv2.CAP_PROP_FRAME_COUNT))
-
-            if self.cap.isOpened():
-                ret, frame = self.cap.read()
-
-                self.cv_img = frame
-                self.updateInputGraphicsView()
-
-                try:
-                    self.filter = filterOperation(self.cv_img)
-                except Exception as e:
-                    logger.debug("No filter class Error: {0}".format(e))
-                self.evaluate()
+            self.videoPlaybackWidget.openVideo(filePath)
 
     def openImageFile(self):
         filename, _ = QFileDialog.getOpenFileName(None, 'Open Image File', filePath.userDir)

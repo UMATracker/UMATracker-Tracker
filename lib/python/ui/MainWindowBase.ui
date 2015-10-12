@@ -6,9 +6,12 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>888</width>
-    <height>552</height>
+    <width>1060</width>
+    <height>574</height>
    </rect>
+  </property>
+  <property name="acceptDrops">
+   <bool>true</bool>
   </property>
   <property name="windowTitle">
    <string>MainWindow</string>
@@ -27,7 +30,7 @@
     <property name="bottomMargin">
      <number>0</number>
     </property>
-    <item row="0" column="0">
+    <item row="1" column="0">
      <widget class="QWidget" name="gridWidget" native="true">
       <layout class="QHBoxLayout" name="horizontalLayout">
        <item>
@@ -41,72 +44,42 @@
          <property name="title">
           <string>Object Tracking</string>
          </property>
-         <layout class="QVBoxLayout" name="verticalLayout_6">
+         <layout class="QVBoxLayout" name="verticalLayout_2">
           <item>
-           <widget class="QGraphicsView" name="inputGraphicsView">
-            <property name="sizePolicy">
-             <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
-              <horstretch>1</horstretch>
-              <verstretch>1</verstretch>
-             </sizepolicy>
-            </property>
-            <property name="verticalScrollBarPolicy">
-             <enum>Qt::ScrollBarAlwaysOff</enum>
-            </property>
-            <property name="horizontalScrollBarPolicy">
-             <enum>Qt::ScrollBarAlwaysOff</enum>
-            </property>
-            <property name="sizeAdjustPolicy">
-             <enum>QAbstractScrollArea::AdjustIgnored</enum>
-            </property>
-           </widget>
-          </item>
-          <item>
-           <widget class="QWidget" name="videoPlaybackWidget" native="true">
-            <layout class="QVBoxLayout" name="verticalLayout_7">
+           <widget class="QFrame" name="horizontalFrame">
+            <layout class="QHBoxLayout" name="horizontalLayout_6">
              <item>
-              <layout class="QHBoxLayout" name="videoPlaybackButtons">
-               <item>
-                <widget class="QPushButton" name="videoGoHeadButton">
-                 <property name="text">
-                  <string>&lt;&lt;</string>
-                 </property>
-                </widget>
-               </item>
-               <item>
-                <widget class="QPushButton" name="videoGoBackwardButton">
-                 <property name="text">
-                  <string>&lt;</string>
-                 </property>
-                </widget>
-               </item>
-               <item>
-                <widget class="QPushButton" name="videoPlayStopButton">
-                 <property name="text">
-                  <string>Play/Stop</string>
-                 </property>
-                </widget>
-               </item>
-               <item>
-                <widget class="QPushButton" name="videoGoForwardButton">
-                 <property name="text">
-                  <string>&gt;</string>
-                 </property>
-                </widget>
-               </item>
-               <item>
-                <widget class="QPushButton" name="videoGoLastButton">
-                 <property name="text">
-                  <string>&gt;&gt;</string>
-                 </property>
-                </widget>
-               </item>
-              </layout>
+              <widget class="QGraphicsView" name="inputGraphicsView">
+               <property name="sizePolicy">
+                <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+                 <horstretch>1</horstretch>
+                 <verstretch>1</verstretch>
+                </sizepolicy>
+               </property>
+               <property name="acceptDrops">
+                <bool>false</bool>
+               </property>
+               <property name="verticalScrollBarPolicy">
+                <enum>Qt::ScrollBarAlwaysOff</enum>
+               </property>
+               <property name="horizontalScrollBarPolicy">
+                <enum>Qt::ScrollBarAlwaysOff</enum>
+               </property>
+               <property name="sizeAdjustPolicy">
+                <enum>QAbstractScrollArea::AdjustIgnored</enum>
+               </property>
+              </widget>
              </item>
              <item>
-              <widget class="QSlider" name="videoPlaybackSlider">
-               <property name="orientation">
-                <enum>Qt::Horizontal</enum>
+              <widget class="QGraphicsView" name="outputGraphicsView">
+               <property name="sizePolicy">
+                <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+                 <horstretch>1</horstretch>
+                 <verstretch>1</verstretch>
+                </sizepolicy>
+               </property>
+               <property name="acceptDrops">
+                <bool>false</bool>
                </property>
               </widget>
              </item>
@@ -114,14 +87,7 @@
            </widget>
           </item>
           <item>
-           <widget class="QGraphicsView" name="outputGraphicsView">
-            <property name="sizePolicy">
-             <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
-              <horstretch>1</horstretch>
-              <verstretch>1</verstretch>
-             </sizepolicy>
-            </property>
-           </widget>
+           <widget class="VideoPlaybackWidget" name="videoPlaybackWidget"/>
           </item>
          </layout>
         </widget>
@@ -261,8 +227,8 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>888</width>
-     <height>29</height>
+     <width>1060</width>
+     <height>21</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuFiles">
@@ -308,6 +274,13 @@
    </property>
   </action>
  </widget>
+ <customwidgets>
+  <customwidget>
+   <class>VideoPlaybackWidget</class>
+   <extends>QWidget</extends>
+   <header>.video_playback_widget</header>
+  </customwidget>
+ </customwidgets>
  <resources/>
  <connections>
   <connection>
