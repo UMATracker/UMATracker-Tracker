@@ -47,8 +47,37 @@ class Ui_MainWindow(Ui_MainWindowBase):
         self.menuInit()
         self.clusteringEstimatorInit()
 
+        MainWindow.dragEnterEvent = self.dragEnterEvent
+        MainWindow.dropEvent = self.dropEvent
+
         self.filter = None
         self.rmot   = None
+
+    def dragEnterEvent(self,event):
+        event.accept()
+
+    def dropEvent(self,event):
+        event.setDropAction(QtCore.Qt.MoveAction)
+        mime = event.mimeData()
+        if mime.hasUrls():
+            urls = mime.urls()
+            if len(urls) > 0:
+                #self.dragFile.emit()
+                self.processDropedFile(urls[0].toLocalFile())
+            event.accept()
+        else:
+            event.ignore()
+
+    def processDropedFile(self,filePath):
+        root,ext = os.path.splitext(filePath)
+        if ext == ".filter":
+            # Read Filter
+            self.openFilterFile(filePath=filePath)
+        elif ext.lower() in [".avi",".mpg",".mts",".mp4"]:
+            # Read Video
+            self.openVideoFile(filePath=filePath)
+        elif ext.lower() in [".png",".bmp",".jpg",".jpeg"]:
+            self.openImageFile(filePath=filePath)
 
     def clusteringEstimatorInit(self):
         self.Kmeans = clusteringEstimator.kmeansEstimator()
