@@ -3,7 +3,7 @@
 
 import os, sys
 
-from PyQt5 import QtCore
+from PyQt5 import QtCore, QtWidgets
 from PyQt5.QtWidgets import QGraphicsScene, QGraphicsView, QGraphicsPixmapItem, QFrame, QFileDialog
 from PyQt5.QtGui import QPixmap, QImage
 
@@ -11,19 +11,22 @@ import cv2
 import numpy as np
 from sklearn import cluster
 
+
 import filePath
 
-sys.path.append( filePath.pythonLibDirPath )
-import misc
-import clusteringEstimator
-from rmot import RMOT
+from lib.python import misc
+from lib.python import clusteringEstimator
+from lib.python.rmot import RMOT
+from lib.python.FilterIO.FilterIO import FilterIO
 
-sys.path.append( os.path.join(filePath.pythonLibDirPath, 'pycv') )
-import filters
+from lib.python.pycv import filters
 
-sys.path.append( os.path.join(filePath.pythonLibDirPath, 'ui') )
-from MainWindowBase import *
+from lib.python.ui.MainWindowBase import Ui_MainWindowBase
 
+
+currentDirPath = os.path.abspath(os.path.dirname(__file__) )
+sampleDataPath = os.path.join(currentDirPath,"data")
+userDir        = os.path.expanduser('~')
 
 # Log file setting.
 # import logging
@@ -234,12 +237,12 @@ class Ui_MainWindow(Ui_MainWindowBase):
             self.cap.release()
             self.cap = None
 
-    def openVideoFile(self):
-        filename, _ = QFileDialog.getOpenFileName(None, 'Open Video File', filePath.userDir)
-
         if len(filename) is not 0:
             self.releaseVideoCapture()
             self.cap = cv2.VideoCapture(misc.utfToSystemStr(filename))
+    def openVideoFile(self, activated=False, filePath = None):
+        if filePath is None:
+            filePath, _ = QFileDialog.getOpenFileName(None, 'Open Video File', userDir)
 
             self.videoPlaybackWidget.show()
             self.videoPlaybackSlider.setRange(0, self.cap.get(cv2.CAP_PROP_FRAME_COUNT))
@@ -260,7 +263,7 @@ class Ui_MainWindow(Ui_MainWindowBase):
         filename, _ = QFileDialog.getOpenFileName(None, 'Open Image File', filePath.userDir)
 
         if len(filename) is not 0:
-            self.cv_img = cv2.imread(misc.utfToSystemStr(filename))
+            self.cv_img = cv2.imread(filename)
             self.videoPlaybackWidget.hide()
 
             self.updateInputGraphicsView()
@@ -279,6 +282,20 @@ class Ui_MainWindow(Ui_MainWindowBase):
                 txt = f.read()
 
             exec(txt)
+            self.filter = filterOperation(self.cv_img)
+
+            self.evaluate()
+
+    def openFilterFile(self, activated=False, filePath = None):
+        if filePath is None:
+            filePath, _ = QFileDialog.getOpenFileName(None, 'Open Block File', userDir, "Block files (*.filter)")
+
+        if len(filePath) is not 0:
+            logger.debug("Open Filter file: {0}".format(filePath))
+
+            filterIO = FilterIO(filePath)
+
+            exec(filterIO.getFilterCode(), globals())
             self.filter = filterOperation(self.cv_img)
 
             self.evaluate()
@@ -318,7 +335,7 @@ class Ui_MainWindow(Ui_MainWindowBase):
             # estimator = cluster.KMeans(n_clusters=self.clusterSizeNumSpinBox.value(), n_jobs=self.cpuCoreNumSpinBox.value())
             # estimator.fit(nonZeroPos)
 
-            method = misc.utfToSystemStr(self.clusteringMethodComboBox.currentText())
+            method = self.clusteringMethodComboBox.currentText()
 
             centerPos = None
             windows   = None
