@@ -1,7 +1,7 @@
 from functools import partial
 import numpy as np
 
-from hungarian import Hungarian
+from .hungarian import Hungarian
 
 def symmetrize(a):
     return a + a.T - np.diag(a.diagonal())
@@ -51,7 +51,8 @@ class RMOT:
         self.xPrev = xs
 
         self.hungarian = Hungarian()
-        self.tau       = 10
+        self.tau       = 5
+        # self.tau       = 3
         self.costMtx   = None
         self.assignMtx = None
 
@@ -77,33 +78,31 @@ class RMOT:
         self.pCond = np.dot(np.einsum('...ij,...jk->...ik',RMOT.F,self.pPrev), RMOT.F.T) + RMOT.Q
 
     def likelihood(self,z1,z2):
-        x, y = z1[0:2]
+        x, y = z1[:2]
         wz1, hz1 = z1[2:4]
         iwz1 = [x-wz1/2, x+wz1/2]
-        ihz1 = [x-hz1/2, x+hz1/2]
+        ihz1 = [y-hz1/2, y+hz1/2]
 
-        x, y = z2[0:2]
+        x, y = z2[:2]
         wz2, hz2 = z2[4:6]
         iwz2 = [x-wz2/2, x+wz2/2]
-        ihz2 = [x-hz2/2, x+hz2/2]
-
-        # if (wz2<5 or hz2<5) or (wz1<5 or hz1<5):
-        #     return 0.0
-
-        # print(z1[2:4], z2[4:6])
+        ihz2 = [y-hz2/2, y+hz2/2]
 
         x_overlap = max(0.0, min(iwz1[1],iwz2[1]) - max(iwz1[0],iwz2[0]));
         y_overlap = max(0.0, min(ihz1[1],ihz2[1]) - max(ihz1[0],ihz2[0]));
         intersection = x_overlap * y_overlap
         union = wz1*hz1 + wz2*hz2 - intersection
 
-        s = 0.0
-        if 1>union or intersection>union:
-            s = 0.0
-        else:
-            s = intersection/union
+        # s = 0.0
+        # if 5>union or intersection>union:
+        #     s = 0.0
+        # else:
+        #     s = intersection/union
+        s = intersection/union
 
-        return 0.8*s + 0.2*1.0/(1.0+np.linalg.norm(z1[:2]-z2[:2]))
+        # return 0.8*s + 0.2*1.0/(1.0+np.linalg.norm(z1[:2]-z2[:2]))
+        return s/(1.0+np.linalg.norm(z1[:2]-z2[:2]))
+        # return s
 
     def calcCostMtx(self,z):
         self.z = z
@@ -190,7 +189,9 @@ class RMOT:
         # https://ja.wikipedia.org/wiki/%E3%82%AB%E3%83%AB%E3%83%9E%E3%83%B3%E3%83%95%E3%82%A3%E3%83%AB%E3%82%BF%E3%83%BC#.E3.82.AB.E3.83.AB.E3.83.9E.E3.83.B3.E3.83.95.E3.82.A3.E3.83.AB.E3.82.BF.E3.83.BC
         rCond  = np.einsum('...ij,...j', RMOT.Fr, self.r)
         rCond  = rCond + 1e-2*np.random.randn(*rCond.shape)
-        prCond = np.einsum('...ij,jk->...ik', np.einsum('ij,...jk->...ik', RMOT.Fr, self.pr), RMOT.Fr.T) + RMOT.Qr
+
+        tmp = np.einsum('...ij,...jk->...ik', RMOT.Fr, self.pr)
+        prCond = np.einsum('...ij,...jk->...ik', tmp, RMOT.Fr.T) + RMOT.Qr
 
         rObs = np.tile(self.xPrev[:,:2], self.N).flatten() - np.tile(self.xPrev[:,:2], (self.N,1)).flatten()
         rObs = rObs.reshape(self.N, self.N, 2)
