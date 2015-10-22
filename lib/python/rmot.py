@@ -52,7 +52,6 @@ class RMOT:
 
         self.hungarian = Hungarian()
         self.tau       = 5
-        # self.tau       = 3
         self.costMtx   = None
         self.assignMtx = None
 
@@ -88,21 +87,26 @@ class RMOT:
         iwz2 = [x-wz2/2, x+wz2/2]
         ihz2 = [y-hz2/2, y+hz2/2]
 
-        x_overlap = max(0.0, min(iwz1[1],iwz2[1]) - max(iwz1[0],iwz2[0]));
-        y_overlap = max(0.0, min(ihz1[1],ihz2[1]) - max(ihz1[0],ihz2[0]));
+        x_overlap = max(0.0, min(iwz1[1],iwz2[1]) - max(iwz1[0],iwz2[0]))
+        y_overlap = max(0.0, min(ihz1[1],ihz2[1]) - max(ihz1[0],ihz2[0]))
         intersection = x_overlap * y_overlap
         union = wz1*hz1 + wz2*hz2 - intersection
 
+        # d = np.dot(z1[:2]-(z2[:2]-z2[2:4]), z2[2:4])/(np.linalg.norm(z1[:2]-(z2[:2]-z2[2:4])) * np.linalg.norm(z2[2:4]))
+        # d = 1.0 / (1.0 + np.exp(-5.0*(d)))
+
+        # return 1.0/(1.0 + np.linalg.norm(z1[:2]-z2[:2]))
+
         # s = 0.0
-        # if 5>union or intersection>union:
+        # if 1>union or intersection>union:
         #     s = 0.0
         # else:
         #     s = intersection/union
         s = intersection/union
 
-        # return 0.8*s + 0.2*1.0/(1.0+np.linalg.norm(z1[:2]-z2[:2]))
-        return s/(1.0+np.linalg.norm(z1[:2]-z2[:2]))
-        # return s
+        # return 0.2*s + 0.8*1.0/(1.0+np.linalg.norm(z1[:2]-z2[:2]))
+        # return 1.0/(1.0+np.linalg.norm(z1[:2]-z2[:2]))
+        return s/(1.0 + np.linalg.norm(z1[:2]-z2[:2]))
 
     def calcCostMtx(self,z):
         self.z = z
@@ -175,8 +179,9 @@ class RMOT:
 
                 self.pPrev[i] = self.pCond[i] -np.dot(np.dot(K, HPHR), K.T)
             else:
-                self.xPrev[i] = self.xCond[i,i]
-                self.pPrev[i] = self.pCond[i]
+                # self.xPrev[i] = self.xCond[i,i]
+                # self.pPrev[i] = self.pCond[i]
+                pass
 
         self.RMN[:] = 0
         np.fill_diagonal(self.RMN,1)
@@ -189,9 +194,7 @@ class RMOT:
         # https://ja.wikipedia.org/wiki/%E3%82%AB%E3%83%AB%E3%83%9E%E3%83%B3%E3%83%95%E3%82%A3%E3%83%AB%E3%82%BF%E3%83%BC#.E3.82.AB.E3.83.AB.E3.83.9E.E3.83.B3.E3.83.95.E3.82.A3.E3.83.AB.E3.82.BF.E3.83.BC
         rCond  = np.einsum('...ij,...j', RMOT.Fr, self.r)
         rCond  = rCond + 1e-2*np.random.randn(*rCond.shape)
-
-        tmp = np.einsum('...ij,...jk->...ik', RMOT.Fr, self.pr)
-        prCond = np.einsum('...ij,...jk->...ik', tmp, RMOT.Fr.T) + RMOT.Qr
+        prCond = np.einsum('...ij,...jk->...ik', np.einsum('...ij,...jk->...ik', RMOT.Fr, self.pr), RMOT.Fr.T) + RMOT.Qr
 
         rObs = np.tile(self.xPrev[:,:2], self.N).flatten() - np.tile(self.xPrev[:,:2], (self.N,1)).flatten()
         rObs = rObs.reshape(self.N, self.N, 2)

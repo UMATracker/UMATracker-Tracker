@@ -92,7 +92,7 @@
          </layout>
         </widget>
        </item>
-       <item alignment="Qt::AlignLeft|Qt::AlignTop">
+       <item>
         <widget class="QGroupBox" name="groupBox">
          <property name="sizePolicy">
           <sizepolicy hsizetype="Fixed" vsizetype="Preferred">
@@ -104,31 +104,6 @@
           <string>Settings</string>
          </property>
          <layout class="QVBoxLayout" name="verticalLayout">
-          <item>
-           <layout class="QHBoxLayout" name="horizontalLayout_3">
-            <item>
-             <widget class="QLabel" name="label_3">
-              <property name="text">
-               <string>Method:</string>
-              </property>
-             </widget>
-            </item>
-            <item>
-             <widget class="QComboBox" name="clusteringMethodComboBox">
-              <item>
-               <property name="text">
-                <string>K-means</string>
-               </property>
-              </item>
-              <item>
-               <property name="text">
-                <string>GMM</string>
-               </property>
-              </item>
-             </widget>
-            </item>
-           </layout>
-          </item>
           <item>
            <layout class="QHBoxLayout" name="horizontalLayout_2">
             <item>
@@ -154,28 +129,51 @@
            </layout>
           </item>
           <item>
-           <layout class="QHBoxLayout" name="horizontalLayout_4">
-            <item>
-             <widget class="QLabel" name="label_2">
-              <property name="sizePolicy">
-               <sizepolicy hsizetype="Minimum" vsizetype="Preferred">
-                <horstretch>0</horstretch>
-                <verstretch>0</verstretch>
-               </sizepolicy>
-              </property>
-              <property name="text">
-               <string>CPU Core:</string>
-              </property>
-             </widget>
-            </item>
-            <item>
-             <widget class="QSpinBox" name="cpuCoreNumSpinBox">
-              <property name="minimum">
-               <number>1</number>
-              </property>
-             </widget>
-            </item>
-           </layout>
+           <widget class="QCheckBox" name="trackingCheckBox">
+            <property name="text">
+             <string>Tracking</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QWidget" name="horizontalWidget" native="true">
+            <layout class="QFormLayout" name="formLayout">
+             <item row="0" column="0">
+              <widget class="QLabel" name="label_2">
+               <property name="text">
+                <string>Window width:</string>
+               </property>
+              </widget>
+             </item>
+             <item row="0" column="1">
+              <widget class="QDoubleSpinBox" name="windowWidthSpinBox">
+               <property name="minimum">
+                <double>1.000000000000000</double>
+               </property>
+               <property name="maximum">
+                <double>1000000.000000000000000</double>
+               </property>
+              </widget>
+             </item>
+             <item row="1" column="0">
+              <widget class="QLabel" name="label_3">
+               <property name="text">
+                <string>Window height:</string>
+               </property>
+              </widget>
+             </item>
+             <item row="1" column="1">
+              <widget class="QDoubleSpinBox" name="windowHeightSpinBox">
+               <property name="minimum">
+                <double>1.000000000000000</double>
+               </property>
+               <property name="maximum">
+                <double>1000000.989999999990687</double>
+               </property>
+              </widget>
+             </item>
+            </layout>
+           </widget>
           </item>
           <item>
            <layout class="QHBoxLayout" name="horizontalLayout_5">
@@ -193,9 +191,9 @@
              </spacer>
             </item>
             <item>
-             <widget class="QPushButton" name="evaluateButton">
+             <widget class="QPushButton" name="resetButton">
               <property name="text">
-               <string>Evaluate</string>
+               <string>Reset</string>
               </property>
              </widget>
             </item>
@@ -240,6 +238,8 @@
     <addaction name="separator"/>
     <addaction name="actionOpenFilterSetting"/>
     <addaction name="separator"/>
+    <addaction name="actionSaveCSVFile"/>
+    <addaction name="separator"/>
     <addaction name="actionQuit"/>
    </widget>
    <addaction name="menuFiles"/>
@@ -271,6 +271,11 @@
    </property>
    <property name="shortcut">
     <string>Ctrl+Q</string>
+   </property>
+  </action>
+  <action name="actionSaveCSVFile">
+   <property name="text">
+    <string>Save to CSV</string>
    </property>
   </action>
  </widget>

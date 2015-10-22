@@ -5,6 +5,7 @@ except ImportError:
 
 import cv2
 import numpy as np
+import math
 import sys
 from PyQt5 import QtWidgets, QtCore
 from PyQt5.QtWidgets import QStyle
@@ -18,7 +19,7 @@ except AttributeError:
 
 
 class VideoPlaybackWidget(QtWidgets.QWidget, Ui_VideoPlaybackWidget):
-    frameChanged = pyqtSignal(np.ndarray)
+    frameChanged = pyqtSignal(np.ndarray, int)
 
     def __init__(self, parent):
         super(VideoPlaybackWidget, self).__init__(parent)
@@ -62,7 +63,7 @@ class VideoPlaybackWidget(QtWidgets.QWidget, Ui_VideoPlaybackWidget):
             if self.cap.isOpened():
                 ret, frame = self.cap.read()
 
-                self.setFrame(frame)
+                self.setFrame(frame, 0)
 
     def stop(self):
         qApp = QtWidgets.qApp
@@ -78,86 +79,93 @@ class VideoPlaybackWidget(QtWidgets.QWidget, Ui_VideoPlaybackWidget):
     def isPlaying(self):
         return self.playbackTimer.isActive()
 
-    def setFrame(self, frame):
-        self.frameChanged.emit(frame)
+    def isOpened(self):
+        return self.cap.isOpened()
+
+    def readFrame(self, frameNo=None):
+        if frameNo is -1:
+            return (False, None)
+        if self.isOpened():
+            if frameNo is not None:
+                self.cap.set(cv2.CAP_PROP_POS_FRAMES, frameNo)
+            return self.cap.read()
+        else:
+            return (False, None)
+
+    def moveToFrame(self, frameNo=None):
+        ret, frame = self.readFrame(frameNo)
+        if ret is True:
+            if frameNo is None:
+                frameNo = self.getFramePos()
+
+            if frameNo != self.playbackSlider.value():
+                self.playbackSlider.setValue(frameNo)
+            self.setFrame(frame, frameNo)
+
+    def getFramePos(self):
+        if self.isOpened():
+            return int(self.cap.get(cv2.CAP_PROP_POS_FRAMES))-1
+        else:
+            return -1
+
+    def getMaxFramePos(self):
+        if self.isOpened():
+            return int(self.cap.get(cv2.CAP_PROP_FRAME_COUNT)) - 1
+        else:
+            return -1
+
+    def getNextFramePos(self):
+        pos = self.getFramePos()+1
+        if 0 <= pos and pos <= self.getMaxFramePos():
+            return pos
+        else:
+            return -1
+
+    def getPrevFramePos(self):
+        pos = self.getFramePos() - 1
+        if 0 <= pos:
+            return pos
+        else:
+            return -1
+
+    def setFrame(self, frame, frameNo):
+        self.frameChanged.emit(frame, frameNo)
 
     @pyqtSlot()
     def playButtonClicked(self):
         if self.isPlaying():
             self.stop()
         else:
-            maxFrames = int(self.cap.get(cv2.CAP_PROP_FRAME_COUNT))
-
-            if self.playbackSlider.value() is not maxFrames:
-                self.fps = int(self.cap.get(cv2.CAP_PROP_FPS))
-
+            if self.playbackSlider.value() < self.getMaxFramePos():
+                self.fps = math.ceil(self.cap.get(cv2.CAP_PROP_FPS))
                 self.start(1000.0/self.fps)
 
     @pyqtSlot()
     def moveFirstButtonClicked(self):
         self.stop()
-        if self.cap.isOpened():
-            self.cap.set(cv2.CAP_PROP_POS_FRAMES, 0)
-            ret, frame = self.cap.read()
-
-            self.playbackSlider.setValue(0)
-
-            self.setFrame(frame)
+        self.moveToFrame(0)
 
     @pyqtSlot()
     def moveLastButtonClicked(self):
         self.stop()
-        if self.cap.isOpened():
-            maxFrames = int(self.cap.get(cv2.CAP_PROP_FRAME_COUNT))
-            # TODO: 行儀の悪い映像だと，末尾のあたりの取得に（ここではsetの時点で）失敗・一時フリーズする．
-            #       しかも，これといったエラーが出ずに進行．
-            #       要検証．
-            self.cap.set(cv2.CAP_PROP_POS_FRAMES, maxFrames)
-            ret, frame = self.cap.read()
-
-            self.playbackSlider.setValue(maxFrames)
-
-            self.setFrame(frame)
+        maxFrameNo = self.getMaxFramePos()
+        self.moveToFrame(maxFrameNo)
 
     @pyqtSlot()
     def moveNextButtonClicked(self):
         self.stop()
-        if self.cap.isOpened():
-            nextFrame = int(self.cap.get(cv2.CAP_PROP_POS_FRAMES))
-            maxFrames = int(self.cap.get(cv2.CAP_PROP_FRAME_COUNT))
-
-            if nextFrame <= maxFrames:
-                # TODO: 行儀の悪い映像だと，末尾のあたりの取得に（ここではsetの時点で）失敗・一時フリーズする．
-                #       しかも，これといったエラーが出ずに進行．
-                #       要検証．
-                self.cap.set(cv2.CAP_PROP_POS_FRAMES, nextFrame)
-                ret, frame = self.cap.read()
-
-                self.playbackSlider.setValue(nextFrame)
-
-                self.setFrame(frame)
+        self.moveToFrame()
 
     @pyqtSlot()
     def movePrevButtonClicked(self):
         self.stop()
-        if self.cap.isOpened():
-            nextFrame = int(self.cap.get(cv2.CAP_PROP_POS_FRAMES))
-            beforeFrame = nextFrame - 2
-            if beforeFrame >= 0:
-                # TODO: 行儀の悪い映像だと，末尾のあたりの取得に（ここではsetの時点で）失敗・一時フリーズする．
-                #       しかも，これといったエラーが出ずに進行．
-                #       要検証．
-                self.cap.set(cv2.CAP_PROP_POS_FRAMES, beforeFrame)
-                ret, frame = self.cap.read()
-
-                self.playbackSlider.setValue(beforeFrame)
-
-                self.setFrame(frame)
+        prevFrameNo = self.getPrevFramePos()
+        self.moveToFrame(prevFrameNo)
 
     @pyqtSlot()
     def videoPlayback(self):
         if self.cap.isOpened():
-            nextFrame = int(self.cap.get(cv2.CAP_PROP_POS_FRAMES))
+            nextFrame = self.getNextFramePos()
             # TODO: 行儀の悪い映像だと，末尾のあたりの取得に（ここではreadの時点で）失敗・一時フリーズする．
             #       しかも，これといったエラーが出ずに進行．
             #       要検証．
@@ -165,8 +173,7 @@ class VideoPlaybackWidget(QtWidgets.QWidget, Ui_VideoPlaybackWidget):
 
             if nextFrame % self.fps is 0:
                 self.playbackSlider.setValue(nextFrame)
-
-            self.setFrame(frame)
+            self.setFrame(frame, nextFrame)
 
     @pyqtSlot(int)
     def playbackSliderActionTriggered(self, action):
@@ -176,11 +183,8 @@ class VideoPlaybackWidget(QtWidgets.QWidget, Ui_VideoPlaybackWidget):
             # TODO: 行儀の悪い映像だと，末尾のあたりの取得に（ここではsetの時点で）失敗・一時フリーズする．
             #       しかも，これといったエラーが出ずに進行．
             #       要検証．
-            self.cap.set(cv2.CAP_PROP_POS_FRAMES, self.playbackSlider.value())
-            ret, frame = self.cap.read()
 
-            self.setFrame(frame)
-
+            self.moveToFrame(self.playbackSlider.value())
 
 if __name__ == "__main__":
     app = QtWidgets.QApplication(sys.argv)
