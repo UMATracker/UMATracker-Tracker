@@ -6,9 +6,6 @@ except ImportError:
 import cv2
 import numpy as np
 import math
-
-import vapoursynth as vs
-
 import sys
 from PyQt5 import QtWidgets, QtCore
 from PyQt5.QtWidgets import QStyle
@@ -20,15 +17,6 @@ try:
 except AttributeError:
     _fromUtf8 = lambda s: s
 
-import os
-
-if getattr(sys, 'frozen', False):
-    currentDirPath = sys._MEIPASS
-elif __file__:
-    currentDirPath = os.getcwd()
-
-vs_core = vs.get_core()
-vs_core.std.LoadPlugin(os.path.join(currentDirPath, 'dll', 'ffms2.dll'))
 
 class VideoPlaybackWidget(QtWidgets.QWidget, Ui_VideoPlaybackWidget):
     frameChanged = pyqtSignal(np.ndarray, int)
@@ -52,49 +40,30 @@ class VideoPlaybackWidget(QtWidgets.QWidget, Ui_VideoPlaybackWidget):
 
         self.movePrevButton.setAutoRepeat(True)
         self.moveNextButton.setAutoRepeat(True)
-        self.movePrevButton.setAutoRepeatInterval(5)
-        self.moveNextButton.setAutoRepeatInterval(5)
+        self.movePrevButton.setAutoRepeatInterval(10)
+        self.moveNextButton.setAutoRepeatInterval(10)
 
-        self.playbackSlider.valueChanged.connect(self.playbackSliderValueChanged)
         self.playbackSlider.actionTriggered.connect(self.playbackSliderActionTriggered)
-        # self.playbackSlider.sliderPressed.connect(self.playbackSliderPressed)
 
         self.playbackSlider.setRange(0, 0)
 
         self.playbackTimer = QtCore.QTimer()
         self.playbackTimer.timeout.connect(self.videoPlayback)
 
-        self.currentFrameNo = -1
-        self.ret = None
+        self.cap = cv2.VideoCapture()
 
     def openVideo(self, filename):
+        if self.cap.isOpened():
+            self.cap.release()
+
         if filename is not None:
-            try:
-                self.ret = vs_core.ffms2.Source(source=filename)
-            except vs.Error:
-                return False
-
-            try:
-                frame = self.ret.get_frame(0)
-            except ValueError:
-                return False
-
+            self.cap = cv2.VideoCapture(filename)
             self.playbackSlider.setValue(0)
-            self.playbackSlider.setRange(0, self.getMaxFramePos())
-            self.fps = math.ceil((self.ret.fps_num)/self.ret.fps_den)
-            self.playbackSlider.setSingleStep(self.fps)
-            self.playbackSlider.setPageStep(self.fps)
-            self.playbackSlider.setTickInterval(self.fps)
+            self.playbackSlider.setRange(0, self.cap.get(cv2.CAP_PROP_FRAME_COUNT))
+            if self.cap.isOpened():
+                ret, frame = self.cap.read()
 
-            ret, frame = self.readFrame(0)
-            if ret:
-                self.currentFrameNo = 0
-                self.frameChanged.emit(frame, 0)
-                return True
-            else:
-                return False
-        else:
-            return False
+                self.setFrame(frame, 0)
 
     def stop(self):
         qApp = QtWidgets.qApp
@@ -111,76 +80,37 @@ class VideoPlaybackWidget(QtWidgets.QWidget, Ui_VideoPlaybackWidget):
         return self.playbackTimer.isActive()
 
     def isOpened(self):
-        return self.ret is not None
+        return self.cap.isOpened()
 
     def readFrame(self, frameNo=None):
         if frameNo is -1:
             return (False, None)
-        if self.ret is not None:
-            if frameNo is None:
-                frameNo = self.currentFrameNo + 1
-
-            if self.getMaxFramePos() < frameNo:
-                return (False, None)
-
-            try:
-                frame = self.ret.get_frame(frameNo)
-            except ValueError:
-                return (False, None)
-
-            l = []
-            for i in range(self.ret.flags):
-                a = np.array(frame.get_read_array(i))
-                l.append(a)
-            l[1], l[2] = l[2], l[1]
-
-            y_shape = l[0].shape
-            for i in range(1, self.ret.flags):
-                l[i] = np.repeat(
-                        np.repeat(
-                            l[i],
-                            self.ret.format.subsampling_w+1,
-                            axis=1),
-                        self.ret.format.subsampling_h+1,
-                        axis=0)
-
-                li_shape = l[i].shape
-                if y_shape != li_shape:
-                    newArray = np.empty(y_shape, dtype=np.uint8)
-                    newArray[:-1, :-1] = l[i]
-                    l[i] = newArray
-                    if li_shape[0] < y_shape[0]:
-                        l[i][-1, :] = l[i][-2, :]
-                    elif li_shape[1] < y_shape[1]:
-                        l[i][:, -1] = l[i][:, -2]
-
-            t = tuple(l)
-            frame = cv2.cvtColor(np.dstack(t), cv2.COLOR_YUV2BGR)
-            self.currentFrameNo = frameNo
-
-            return (True, frame)
+        if self.isOpened():
+            if frameNo is not None:
+                self.cap.set(cv2.CAP_PROP_POS_FRAMES, frameNo)
+            return self.cap.read()
         else:
             return (False, None)
 
-    def moveToFrame(self, frameNo=None, changeSlider=True):
+    def moveToFrame(self, frameNo=None):
         ret, frame = self.readFrame(frameNo)
         if ret is True:
             if frameNo is None:
                 frameNo = self.getFramePos()
 
-            if changeSlider and frameNo != self.playbackSlider.value():
+            if frameNo != self.playbackSlider.value():
                 self.playbackSlider.setValue(frameNo)
             self.setFrame(frame, frameNo)
 
     def getFramePos(self):
         if self.isOpened():
-            return self.currentFrameNo
+            return int(self.cap.get(cv2.CAP_PROP_POS_FRAMES))-1
         else:
             return -1
 
     def getMaxFramePos(self):
         if self.isOpened():
-            return self.ret.num_frames - 1
+            return int(self.cap.get(cv2.CAP_PROP_FRAME_COUNT)) - 1
         else:
             return -1
 
@@ -199,7 +129,6 @@ class VideoPlaybackWidget(QtWidgets.QWidget, Ui_VideoPlaybackWidget):
             return -1
 
     def setFrame(self, frame, frameNo):
-        print(frameNo)
         self.frameChanged.emit(frame, frameNo)
 
     @pyqtSlot()
@@ -208,7 +137,8 @@ class VideoPlaybackWidget(QtWidgets.QWidget, Ui_VideoPlaybackWidget):
             self.stop()
         else:
             if self.playbackSlider.value() < self.getMaxFramePos():
-                self.start(100.0/self.fps)
+                self.fps = math.ceil(self.cap.get(cv2.CAP_PROP_FPS))
+                self.start(1000.0/self.fps)
 
     @pyqtSlot()
     def moveFirstButtonClicked(self):
@@ -234,35 +164,27 @@ class VideoPlaybackWidget(QtWidgets.QWidget, Ui_VideoPlaybackWidget):
 
     @pyqtSlot()
     def videoPlayback(self):
-        if self.isOpened():
+        if self.cap.isOpened():
             nextFrame = self.getNextFramePos()
-            self.playbackSlider.setValue(nextFrame)
-            # ret, frame = self.readFrame()
-            # if ret:
-            #     self.playbackSlider.setValue(nextFrame)
-            #     self.setFrame(frame, nextFrame)
-            # else:
-            #     self.stop()
+            # TODO: 行儀の悪い映像だと，末尾のあたりの取得に（ここではreadの時点で）失敗・一時フリーズする．
+            #       しかも，これといったエラーが出ずに進行．
+            #       要検証．
+            ret, frame = self.cap.read()
+
+            if nextFrame % self.fps is 0:
+                self.playbackSlider.setValue(nextFrame)
+            self.setFrame(frame, nextFrame)
 
     @pyqtSlot(int)
-    def playbackSliderActionTriggered(self, value):
-        print('Slider val: {0}'.format(self.playbackSlider.value()))
-        if self.isPlaying():
-            self.stop()
+    def playbackSliderActionTriggered(self, action):
+        # logger.debug("Action: {0}".format(action))
+        self.stop()
+        if self.cap.isOpened():
+            # TODO: 行儀の悪い映像だと，末尾のあたりの取得に（ここではsetの時点で）失敗・一時フリーズする．
+            #       しかも，これといったエラーが出ずに進行．
+            #       要検証．
 
-    @pyqtSlot(int)
-    def playbackSliderValueChanged(self, value):
-        currentValue = self.playbackSlider.value()
-        print('Slider val: {0}, {1}'.format(currentValue, value))
-
-        if self.isOpened():
-            self.moveToFrame(currentValue, False)
-
-    # @pyqtSlot()
-    # def playbackSliderPressed(self):
-    #     print('press')
-    #     if self.isPlaying():
-    #         self.stop()
+            self.moveToFrame(self.playbackSlider.value())
 
 if __name__ == "__main__":
     app = QtWidgets.QApplication(sys.argv)
