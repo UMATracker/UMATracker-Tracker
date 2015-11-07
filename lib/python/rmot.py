@@ -92,7 +92,14 @@ class RMOT:
         intersection = x_overlap * y_overlap
         union = wz1*hz1 + wz2*hz2 - intersection
 
-        # d = np.dot(z1[:2]-(z2[:2]-z2[2:4]), z2[2:4])/(np.linalg.norm(z1[:2]-(z2[:2]-z2[2:4])) * np.linalg.norm(z2[2:4]))
+
+        prevV = z1[:2]-(z2[:2]-z2[2:4])
+        nextV = z2[2:4]
+
+        # if np.linalg.norm(prevV) < np.linalg.norm(nextV)/2.0:
+        #     d = 0.5
+        # else:
+        #     d = np.dot(prevV, nextV)/(np.linalg.norm(prevV) * np.linalg.norm(nextV))
         # d = 1.0 / (1.0 + np.exp(-5.0*(d)))
 
         # return 1.0/(1.0 + np.linalg.norm(z1[:2]-z2[:2]))
