@@ -1,13 +1,20 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-import sys, six
+import os, sys, six
 
 if six.PY2:
     reload(sys)
     sys.setdefaultencoding('UTF8')
 
-import os
+# determine if application is a script file or frozen exe
+if getattr(sys, 'frozen', False):
+    currentDirPath = sys._MEIPASS
+    import win32api
+    win32api.SetDllDirectory(sys._MEIPASS)
+    win32api.SetDllDirectory(os.path.join(sys._MEIPASS, 'dll'))
+elif __file__:
+    currentDirPath = os.getcwd()
 
 from PyQt5 import QtCore, QtWidgets
 from PyQt5.QtWidgets import QGraphicsScene, QGraphicsView, QGraphicsPixmapItem, QFrame, QFileDialog, QMainWindow
@@ -31,7 +38,6 @@ from lib.python.pycv import filters
 from lib.python.ui.MainWindowBase import Ui_MainWindowBase
 
 
-currentDirPath = os.path.abspath(os.path.dirname(__file__) )
 sampleDataPath = os.path.join(currentDirPath,"data")
 userDir        = os.path.expanduser('~')
 
