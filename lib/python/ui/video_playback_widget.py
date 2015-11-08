@@ -28,7 +28,10 @@ elif __file__:
     currentDirPath = os.getcwd()
 
 vs_core = vs.get_core()
-vs_core.std.LoadPlugin(os.path.join(currentDirPath, 'dll', 'ffms2.dll'))
+for libfile in [os.path.join(currentDirPath, 'dll', 'ffms2.dll'),
+                r'/usr/local/Cellar/ffms2/2.21/lib/libffms2.dylib']:
+    if os.path.isfile(libfile):
+        vs_core.std.LoadPlugin(libfile)
 
 class VideoPlaybackWidget(QtWidgets.QWidget, Ui_VideoPlaybackWidget):
     frameChanged = pyqtSignal(np.ndarray, int)
