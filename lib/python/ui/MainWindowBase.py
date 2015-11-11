@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file '.\MainWindowBase.ui'
 #
-# Created by: PyQt5 UI code generator 5.4.2
+# Created by: PyQt5 UI code generator 5.5
 #
 # WARNING! All changes made in this file will be lost!
 
@@ -98,6 +98,7 @@ class Ui_MainWindowBase(object):
         self.windowWidthSpinBox = QtWidgets.QDoubleSpinBox(self.horizontalWidget)
         self.windowWidthSpinBox.setMinimum(1.0)
         self.windowWidthSpinBox.setMaximum(1000000.0)
+        self.windowWidthSpinBox.setProperty("value", 10.0)
         self.windowWidthSpinBox.setObjectName("windowWidthSpinBox")
         self.formLayout.setWidget(0, QtWidgets.QFormLayout.FieldRole, self.windowWidthSpinBox)
         self.label_3 = QtWidgets.QLabel(self.horizontalWidget)
@@ -106,6 +107,7 @@ class Ui_MainWindowBase(object):
         self.windowHeightSpinBox = QtWidgets.QDoubleSpinBox(self.horizontalWidget)
         self.windowHeightSpinBox.setMinimum(1.0)
         self.windowHeightSpinBox.setMaximum(1000000.99)
+        self.windowHeightSpinBox.setProperty("value", 10.0)
         self.windowHeightSpinBox.setObjectName("windowHeightSpinBox")
         self.formLayout.setWidget(1, QtWidgets.QFormLayout.FieldRole, self.windowHeightSpinBox)
         self.verticalLayout.addWidget(self.horizontalWidget)
