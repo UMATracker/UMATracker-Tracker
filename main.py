@@ -189,9 +189,11 @@ class Ui_MainWindow(QMainWindow, Ui_MainWindowBase):
             logger.debug("Open Filter file: {0}".format(filePath))
 
             filterIO = FilterIO(filePath)
+            print(filterIO.getFilterCode())
 
             exec(filterIO.getFilterCode(), globals())
             self.filter = filterOperation(self.cv_img)
+            self.filter.fgbg = filterIO.getBackgroundImg()
             self.evaluate()
 
     def saveCSVFile(self, activated=False, filePath = None):
