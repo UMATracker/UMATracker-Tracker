@@ -232,9 +232,7 @@ class Ui_MainWindow(QMainWindow, Ui_MainWindowBase):
 
     def evaluate(self):
         if self.filter is not None:
-            cv2.imwrite('fg.png', self.cv_img)
             img = self.filter.filterFunc(self.cv_img.copy())
-            cv2.imwrite('bg.png', img)
 
             nonZeroPos = np.transpose(np.nonzero(np.transpose(img)))
 
