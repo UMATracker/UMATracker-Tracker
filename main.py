@@ -10,15 +10,17 @@ if six.PY2:
 # determine if application is a script file or frozen exe
 if getattr(sys, 'frozen', False):
     currentDirPath = sys._MEIPASS
-    import win32api
-    win32api.SetDllDirectory(sys._MEIPASS)
-    win32api.SetDllDirectory(os.path.join(sys._MEIPASS, 'dll'))
+    if os.name == 'nt':
+        import win32api
+        win32api.SetDllDirectory(sys._MEIPASS)
+        win32api.SetDllDirectory(os.path.join(sys._MEIPASS, 'dll'))
 elif __file__:
     currentDirPath = os.getcwd()
 
 from PyQt5 import QtCore, QtWidgets
 from PyQt5.QtWidgets import QGraphicsScene, QGraphicsView, QGraphicsPixmapItem, QFrame, QFileDialog, QMainWindow
 from PyQt5.QtGui import QPixmap, QImage
+from PyQt5.QtCore import QMutex
 
 import cv2
 import numpy as np
@@ -68,6 +70,8 @@ class Ui_MainWindow(QMainWindow, Ui_MainWindowBase):
         self.rmot   = None
         self.coords = None
 
+        self.mutex = QMutex()
+
     def dragEnterEvent(self,event):
         event.acceptProposedAction()
 
@@ -113,12 +117,13 @@ class Ui_MainWindow(QMainWindow, Ui_MainWindowBase):
 
 
     def setFrame(self, frame, frameNo):
-        print(frameNo)
+        self.mutex.lock()
         if frame is not None:
             self.cv_img = frame
             self.currentFrameNo = frameNo
             self.updateInputGraphicsView()
             self.evaluate()
+        self.mutex.unlock()
 
     def imgInit(self):
         # self.cv_img = cv2.imread(os.path.join(filePath.sampleDataPath,"color_filter_test.png"))

@@ -41,10 +41,11 @@ elif os.name == 'posix':
     # ディレクトリがこのときはOKだろうけど，ちがうディレクトリに
     # FFMS2が入ってたらどうする？
     print("Mac!")
-    for libfile in [os.path.join(currentDirPath, 'dll', 'ffms2.dll'),
+    for libfile in [os.path.join(currentDirPath, 'lib', 'libffms2.dylib'),
                     r'/usr/local/Cellar/ffms2/2.21/lib/libffms2.dylib']:
         if os.path.isfile(libfile):
             vs_core.std.LoadPlugin(libfile)
+            break
 
 class VideoPlaybackWidget(QtWidgets.QWidget, Ui_VideoPlaybackWidget):
     frameChanged = pyqtSignal(np.ndarray, int)
