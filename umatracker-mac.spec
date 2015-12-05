@@ -30,7 +30,7 @@ exe = EXE(pyz,
         debug=True,
         strip=None,
         upx=True,
-        console=True, icon=None)
+        console=True, icon='./icon/icon.icns')
 
 coll = COLLECT(exe,
         a.binaries,
@@ -43,5 +43,5 @@ coll = COLLECT(exe,
 app = BUNDLE(coll,
         name=os.path.join('dist', 'UMATracker-DetectCenter.app'),
         appname="UMATracker-DetectCenter",
-        version = '0.1'
+        version = '0.1', icon='./icon/icon.icns'
         )
