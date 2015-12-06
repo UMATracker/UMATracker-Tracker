@@ -27,10 +27,10 @@ exe = EXE(pyz,
         a.datas,
         a.binaries,
         name='UMATracker-DetectCenter',
-        debug=True,
+        debug=False,
         strip=None,
         upx=True,
-        console=True, icon='./icon/icon.icns')
+        console=False, icon='./icon/icon.icns')
 
 coll = COLLECT(exe,
         a.binaries,
