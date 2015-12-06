@@ -94,12 +94,8 @@ class VideoPlaybackWidget(QtWidgets.QWidget, Ui_VideoPlaybackWidget):
         self.currentFrameNo = -1
         self.ret = None
 
-        self.thread = QThread(self)
-        self.thread.finished.connect(self.terminated)
-        self.thread.started.connect(self.started)
-        self.thread.run = self.run
-
-        self.stopFlag = False
+        self.playbackTimer = QtCore.QTimer()
+        self.playbackTimer.timeout.connect(self.videoPlayback)
 
     def copySource(self, videoPlaybackWidget):
         self.ret = videoPlaybackWidget.ret
@@ -143,6 +139,12 @@ class VideoPlaybackWidget(QtWidgets.QWidget, Ui_VideoPlaybackWidget):
             self.playbackSlider.setPageStep(self.fps)
             self.playbackSlider.setTickInterval(self.fps)
 
+            # FIXME:おそらくFFMS2かVapourSynthのバグで，
+            # 事前に映像をいくらか読んだあとにゼロフレームに
+            # 戻さないと，映像がずれる（Macのみ）．
+            for i in range(min(100, self.getMaxFramePos())):
+                frame = self.ret.get_frame(i)
+
             ret, frame = self.readFrame(0)
             if ret:
                 self.currentFrameNo = 0
@@ -154,19 +156,26 @@ class VideoPlaybackWidget(QtWidgets.QWidget, Ui_VideoPlaybackWidget):
             return False
 
     def stop(self):
-        self.stopFlag = True
         self.terminated()
 
     def terminated(self):
         qApp = QtWidgets.qApp
         self.playButton.setIcon(qApp.style().standardIcon(QStyle.SP_MediaPlay))
+        self.playbackTimer.stop()
 
     def started(self):
         qApp = QtWidgets.qApp
         self.playButton.setIcon(qApp.style().standardIcon(QStyle.SP_MediaPause))
 
+    def start(self, interval):
+        qApp = QtWidgets.qApp
+        self.playButton.setIcon(qApp.style().standardIcon(QStyle.SP_MediaPause))
+        self.playbackTimer.setInterval(interval)
+        self.playbackTimer.start()
+
+
     def isPlaying(self):
-        return self.thread.isRunning()
+        return self.playbackTimer.isActive()
 
     def isOpened(self):
         return self.ret is not None
@@ -260,41 +269,34 @@ class VideoPlaybackWidget(QtWidgets.QWidget, Ui_VideoPlaybackWidget):
         print(frameNo)
         self.frameChanged.emit(frame, frameNo)
 
-    def run(self):
-        while not self.stopFlag:
-            print(self.fps, self.delay)
-            self.thread.msleep(self.delay)
-            self.videoPlayback()
-
     @pyqtSlot()
     def playButtonClicked(self):
         if self.isPlaying():
-            self.stopFlag = True
+            self.stop()
         else:
             if self.playbackSlider.value() < self.getMaxFramePos():
                 self.delay = int(1000.0/float(self.fps))
-                self.stopFlag = False
-                self.thread.start()
+                self.start(self.delay)
 
     @pyqtSlot()
     def moveFirstButtonClicked(self):
-        self.stopFlag = True
+        self.stop()
         self.moveToFrame(0)
 
     @pyqtSlot()
     def moveLastButtonClicked(self):
-        self.stopFlag = True
+        self.stop()
         maxFrameNo = self.getMaxFramePos()
         self.moveToFrame(maxFrameNo)
 
     @pyqtSlot()
     def moveNextButtonClicked(self):
-        self.stopFlag = True
+        self.stop()
         self.moveToFrame()
 
     @pyqtSlot()
     def movePrevButtonClicked(self):
-        self.stopFlag = True
+        self.stop()
         prevFrameNo = self.getPrevFramePos()
         self.moveToFrame(prevFrameNo)
 
@@ -307,7 +309,7 @@ class VideoPlaybackWidget(QtWidgets.QWidget, Ui_VideoPlaybackWidget):
     def playbackSliderActionTriggered(self, value):
         print('Slider val: {0}'.format(self.playbackSlider.value()))
         if self.isPlaying():
-            self.stopFlag = True
+            self.stop()
 
     @pyqtSlot(int)
     def playbackSliderValueChanged(self, value):
