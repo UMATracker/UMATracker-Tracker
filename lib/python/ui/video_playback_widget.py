@@ -36,7 +36,6 @@ if os.name == 'nt':
             vs_core.std.LoadPlugin(
                     os.path.join(
                         currentDirPath,
-                        'dll',
                         'ffms2.dll'
                         )
                     )
