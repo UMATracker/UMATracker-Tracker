@@ -3,10 +3,10 @@ import os
 
 datas = [('./data', 'data'),]
 
-binaries = [(os.path.join(os.getcwd(), 'dll', 'ffms2.dll'), 'dll'),
-        (os.path.join(os.getcwd(), 'dll', 'msvcp120.dll'), 'dll'),
-        (os.path.join(os.getcwd(), 'dll', 'msvcr120.dll'), 'dll'),
-        (os.path.join(os.getcwd(), 'dll', 'opencv_ffmpeg300_64.dll'), 'dll')]
+binaries = []
+for dir_path, dir_names, file_names in os.walk("dll"):
+    for file_name in file_names:
+        binaries.append((os.path.join('.\\', dir_path, file_name), 'dll'))
 
 a = Analysis(['./main.py'],
         pathex=['./'],
@@ -21,9 +21,9 @@ a = Analysis(['./main.py'],
         cipher=None)
 
 a.binaries += [
-        ("llvmlite/binding/llvmlite.dll", "./dll/llvmlite.dll", 'BINARY'),
-        ("llvmlite/binding/msvcp140.dll", "./dll/msvcp140.dll", 'BINARY'),
-        ("llvmlite/binding/vcruntime140.dll", "./dll/vcruntime140.dll", 'BINARY'),
+        ("llvmlite/binding/llvmlite.dll", "./dll/LLVMLite/llvmlite.dll", 'BINARY'),
+        ("llvmlite/binding/msvcp140.dll", "./dll/LLVMLite/msvcp140.dll", 'BINARY'),
+        ("llvmlite/binding/vcruntime140.dll", "./dll/LLVMLite/vcruntime140.dll", 'BINARY'),
         ]
 
 pyz = PYZ(a.pure, cipher=None)

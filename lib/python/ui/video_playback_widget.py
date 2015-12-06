@@ -30,22 +30,35 @@ elif __file__:
 vs_core = vs.get_core()
 
 print(os.name)
-
 if os.name == 'nt':
     try:
-        vs_core.std.LoadPlugin(os.path.join(currentDirPath, 'dll', 'ffms2.dll'))
+        if getattr(sys, 'frozen', False):
+            vs_core.std.LoadPlugin(
+                    os.path.join(
+                        currentDirPath,
+                        'dll',
+                        'ffms2.dll'
+                        )
+                    )
+        else:
+            vs_core.std.LoadPlugin(
+                    os.path.join(
+                        currentDirPath,
+                        'dll',
+                        'VapourSynth',
+                        'ffms2.dll'
+                        )
+                    )
     except vs.Error:
         pass
-elif os.name == 'posix':
-    # FIXME:これじゃあたぶん動かない．
-    # ディレクトリがこのときはOKだろうけど，ちがうディレクトリに
-    # FFMS2が入ってたらどうする？
+elif os.name == 'posix':  # FIXME:Linuxだと落ちる．
     print("Mac!")
     for libfile in [os.path.join(currentDirPath, 'lib', 'libffms2.dylib'),
                     r'/usr/local/Cellar/ffms2/2.21/lib/libffms2.dylib']:
         if os.path.isfile(libfile):
             vs_core.std.LoadPlugin(libfile)
             break
+
 
 class VideoPlaybackWidget(QtWidgets.QWidget, Ui_VideoPlaybackWidget):
     frameChanged = pyqtSignal(np.ndarray, int)
