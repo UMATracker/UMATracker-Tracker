@@ -1,6 +1,5 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-# Last-Updated : <2015/05/04 15:36:07 by ymnk>
 
 import cv2
 import numpy as np
@@ -16,6 +15,22 @@ logger.setLevel(DEBUG)
 logger.addHandler(handler)
 
 class Filter:
+    # High-pass filter
+    @classmethod
+    def HPF(self,im_source,im_mask):
+        if len(im_source.shape) == 3:
+            return None
+        im_float32 = np.float32(im_source)
+        dft = cv2.dft(im_float32, flags = cv2.DFT_COMPLEX_OUTPUT)
+        dft_shift = np.fft.fftshift(dft)
+        fshift = dft_shift*im_mask
+        f_ishift = np.fft.ifftshift(fshift)
+        im_back = cv2.idft(f_ishift)
+        im_back = cv2.magnitude(im_back[:,:,0],im_back[:,:,1])
+        Pmax = np.max(im_back)
+        im_pow = im_back/Pmax*255
+        return np.uint8(im_pow)
+
     @classmethod
     def colorFilter(self,im_in,rgb, lab_dist):
 
@@ -45,6 +60,18 @@ def main(argv):
     cv2.imshow("AA",im_hsv)
     cv2.waitKey(0)
     print(img_fn)
+
+    
+    img = scipy.misc.lena()
+    rows, cols = img.shape
+    crow, ccol = rows/2 , cols/2
+    mask = np.zeros((rows, cols, 1), np.uint8)
+    cv2.circle(mask,(crow,ccol),radius = 50,color = 255,thickness = -1)
+    
+    mask = 255-mask
+    im = Filter.HPF(img,mask)
+    cv2.imshow("A",im)
+    cv2.waitKey(0)
 
 if __name__ == "__main__":
     import sys

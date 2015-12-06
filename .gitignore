@@ -1,6 +1,11 @@
 .DS_Store
 test/
 user/
+dist/
+build/
+*.spec
+!umatracker-mac.spec
+!umatracker-win.spec
 *.pyc
 Thumbs.db
 *.log

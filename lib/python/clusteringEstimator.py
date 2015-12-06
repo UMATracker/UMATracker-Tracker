@@ -31,7 +31,11 @@ class kmeansEstimator:
         self.setEstimatorSettings(nCluster)
 
         self.estimator.fit(data)
-        return self.estimator.cluster_centers_
+
+        windows = np.zeros((nCluster,2))
+        for i in range(nCluster):
+            windows[i,:] = np.var(data[self.estimator.labels_==i,:], axis=0)
+        return self.estimator.cluster_centers_, windows
 
 class gmmEstimator:
     def __init__(self):
