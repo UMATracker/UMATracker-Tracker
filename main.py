@@ -19,7 +19,7 @@ elif __file__:
 
 from PyQt5 import QtCore, QtWidgets
 from PyQt5.QtWidgets import QGraphicsScene, QGraphicsView, QGraphicsPixmapItem, QFrame, QFileDialog, QMainWindow
-from PyQt5.QtGui import QPixmap, QImage
+from PyQt5.QtGui import QPixmap, QImage, QIcon
 from PyQt5.QtCore import Qt
 
 import cv2
@@ -29,6 +29,8 @@ from sklearn import cluster
 import pandas as pd
 
 import filePath
+
+import icon
 
 from lib.python import misc
 from lib.python import clusteringEstimator
@@ -336,6 +338,7 @@ class Ui_MainWindow(QMainWindow, Ui_MainWindowBase):
 if __name__ == "__main__":
     app = QtWidgets.QApplication(sys.argv)
     MainWindow = Ui_MainWindow(currentDirPath)
+    MainWindow.setWindowIcon(QIcon(':/icon/icon.ico'))
     MainWindow.show()
     sys.exit(app.exec_())
 
