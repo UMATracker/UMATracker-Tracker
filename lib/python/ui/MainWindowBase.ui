@@ -6,9 +6,12 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>888</width>
-    <height>552</height>
+    <width>1060</width>
+    <height>574</height>
    </rect>
+  </property>
+  <property name="acceptDrops">
+   <bool>true</bool>
   </property>
   <property name="windowTitle">
    <string>MainWindow</string>
@@ -27,7 +30,7 @@
     <property name="bottomMargin">
      <number>0</number>
     </property>
-    <item row="0" column="0">
+    <item row="1" column="0">
      <widget class="QWidget" name="gridWidget" native="true">
       <layout class="QHBoxLayout" name="horizontalLayout">
        <item>
@@ -41,72 +44,42 @@
          <property name="title">
           <string>Object Tracking</string>
          </property>
-         <layout class="QVBoxLayout" name="verticalLayout_6">
+         <layout class="QVBoxLayout" name="verticalLayout_2">
           <item>
-           <widget class="QGraphicsView" name="inputGraphicsView">
-            <property name="sizePolicy">
-             <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
-              <horstretch>1</horstretch>
-              <verstretch>1</verstretch>
-             </sizepolicy>
-            </property>
-            <property name="verticalScrollBarPolicy">
-             <enum>Qt::ScrollBarAlwaysOff</enum>
-            </property>
-            <property name="horizontalScrollBarPolicy">
-             <enum>Qt::ScrollBarAlwaysOff</enum>
-            </property>
-            <property name="sizeAdjustPolicy">
-             <enum>QAbstractScrollArea::AdjustIgnored</enum>
-            </property>
-           </widget>
-          </item>
-          <item>
-           <widget class="QWidget" name="videoPlaybackWidget" native="true">
-            <layout class="QVBoxLayout" name="verticalLayout_7">
+           <widget class="QFrame" name="horizontalFrame">
+            <layout class="QHBoxLayout" name="horizontalLayout_6">
              <item>
-              <layout class="QHBoxLayout" name="videoPlaybackButtons">
-               <item>
-                <widget class="QPushButton" name="videoGoHeadButton">
-                 <property name="text">
-                  <string>&lt;&lt;</string>
-                 </property>
-                </widget>
-               </item>
-               <item>
-                <widget class="QPushButton" name="videoGoBackwardButton">
-                 <property name="text">
-                  <string>&lt;</string>
-                 </property>
-                </widget>
-               </item>
-               <item>
-                <widget class="QPushButton" name="videoPlayStopButton">
-                 <property name="text">
-                  <string>Play/Stop</string>
-                 </property>
-                </widget>
-               </item>
-               <item>
-                <widget class="QPushButton" name="videoGoForwardButton">
-                 <property name="text">
-                  <string>&gt;</string>
-                 </property>
-                </widget>
-               </item>
-               <item>
-                <widget class="QPushButton" name="videoGoLastButton">
-                 <property name="text">
-                  <string>&gt;&gt;</string>
-                 </property>
-                </widget>
-               </item>
-              </layout>
+              <widget class="QGraphicsView" name="inputGraphicsView">
+               <property name="sizePolicy">
+                <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+                 <horstretch>1</horstretch>
+                 <verstretch>1</verstretch>
+                </sizepolicy>
+               </property>
+               <property name="acceptDrops">
+                <bool>false</bool>
+               </property>
+               <property name="verticalScrollBarPolicy">
+                <enum>Qt::ScrollBarAlwaysOff</enum>
+               </property>
+               <property name="horizontalScrollBarPolicy">
+                <enum>Qt::ScrollBarAlwaysOff</enum>
+               </property>
+               <property name="sizeAdjustPolicy">
+                <enum>QAbstractScrollArea::AdjustIgnored</enum>
+               </property>
+              </widget>
              </item>
              <item>
-              <widget class="QSlider" name="videoPlaybackSlider">
-               <property name="orientation">
-                <enum>Qt::Horizontal</enum>
+              <widget class="QGraphicsView" name="outputGraphicsView">
+               <property name="sizePolicy">
+                <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+                 <horstretch>1</horstretch>
+                 <verstretch>1</verstretch>
+                </sizepolicy>
+               </property>
+               <property name="acceptDrops">
+                <bool>false</bool>
                </property>
               </widget>
              </item>
@@ -114,19 +87,12 @@
            </widget>
           </item>
           <item>
-           <widget class="QGraphicsView" name="outputGraphicsView">
-            <property name="sizePolicy">
-             <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
-              <horstretch>1</horstretch>
-              <verstretch>1</verstretch>
-             </sizepolicy>
-            </property>
-           </widget>
+           <widget class="VideoPlaybackWidget" name="videoPlaybackWidget"/>
           </item>
          </layout>
         </widget>
        </item>
-       <item alignment="Qt::AlignLeft|Qt::AlignTop">
+       <item>
         <widget class="QGroupBox" name="groupBox">
          <property name="sizePolicy">
           <sizepolicy hsizetype="Fixed" vsizetype="Preferred">
@@ -138,31 +104,6 @@
           <string>Settings</string>
          </property>
          <layout class="QVBoxLayout" name="verticalLayout">
-          <item>
-           <layout class="QHBoxLayout" name="horizontalLayout_3">
-            <item>
-             <widget class="QLabel" name="label_3">
-              <property name="text">
-               <string>Method:</string>
-              </property>
-             </widget>
-            </item>
-            <item>
-             <widget class="QComboBox" name="clusteringMethodComboBox">
-              <item>
-               <property name="text">
-                <string>K-means</string>
-               </property>
-              </item>
-              <item>
-               <property name="text">
-                <string>GMM</string>
-               </property>
-              </item>
-             </widget>
-            </item>
-           </layout>
-          </item>
           <item>
            <layout class="QHBoxLayout" name="horizontalLayout_2">
             <item>
@@ -188,28 +129,57 @@
            </layout>
           </item>
           <item>
-           <layout class="QHBoxLayout" name="horizontalLayout_4">
-            <item>
-             <widget class="QLabel" name="label_2">
-              <property name="sizePolicy">
-               <sizepolicy hsizetype="Minimum" vsizetype="Preferred">
-                <horstretch>0</horstretch>
-                <verstretch>0</verstretch>
-               </sizepolicy>
-              </property>
-              <property name="text">
-               <string>CPU Core:</string>
-              </property>
-             </widget>
-            </item>
-            <item>
-             <widget class="QSpinBox" name="cpuCoreNumSpinBox">
-              <property name="minimum">
-               <number>1</number>
-              </property>
-             </widget>
-            </item>
-           </layout>
+           <widget class="QCheckBox" name="trackingCheckBox">
+            <property name="text">
+             <string>Tracking</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QWidget" name="horizontalWidget" native="true">
+            <layout class="QFormLayout" name="formLayout">
+             <item row="0" column="0">
+              <widget class="QLabel" name="label_2">
+               <property name="text">
+                <string>Window width:</string>
+               </property>
+              </widget>
+             </item>
+             <item row="0" column="1">
+              <widget class="QDoubleSpinBox" name="windowWidthSpinBox">
+               <property name="minimum">
+                <double>1.000000000000000</double>
+               </property>
+               <property name="maximum">
+                <double>1000000.000000000000000</double>
+               </property>
+               <property name="value">
+                <double>10.000000000000000</double>
+               </property>
+              </widget>
+             </item>
+             <item row="1" column="0">
+              <widget class="QLabel" name="label_3">
+               <property name="text">
+                <string>Window height:</string>
+               </property>
+              </widget>
+             </item>
+             <item row="1" column="1">
+              <widget class="QDoubleSpinBox" name="windowHeightSpinBox">
+               <property name="minimum">
+                <double>1.000000000000000</double>
+               </property>
+               <property name="maximum">
+                <double>1000000.989999999990687</double>
+               </property>
+               <property name="value">
+                <double>10.000000000000000</double>
+               </property>
+              </widget>
+             </item>
+            </layout>
+           </widget>
           </item>
           <item>
            <layout class="QHBoxLayout" name="horizontalLayout_5">
@@ -227,9 +197,9 @@
              </spacer>
             </item>
             <item>
-             <widget class="QPushButton" name="evaluateButton">
+             <widget class="QPushButton" name="resetButton">
               <property name="text">
-               <string>Evaluate</string>
+               <string>Reset</string>
               </property>
              </widget>
             </item>
@@ -261,8 +231,8 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>888</width>
-     <height>29</height>
+     <width>1060</width>
+     <height>21</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuFiles">
@@ -273,6 +243,8 @@
     <addaction name="actionOpenImage"/>
     <addaction name="separator"/>
     <addaction name="actionOpenFilterSetting"/>
+    <addaction name="separator"/>
+    <addaction name="actionSaveCSVFile"/>
     <addaction name="separator"/>
     <addaction name="actionQuit"/>
    </widget>
@@ -307,7 +279,19 @@
     <string>Ctrl+Q</string>
    </property>
   </action>
+  <action name="actionSaveCSVFile">
+   <property name="text">
+    <string>Save to CSV</string>
+   </property>
+  </action>
  </widget>
+ <customwidgets>
+  <customwidget>
+   <class>VideoPlaybackWidget</class>
+   <extends>QWidget</extends>
+   <header>.video_playback_widget</header>
+  </customwidget>
+ </customwidgets>
  <resources/>
  <connections>
   <connection>
