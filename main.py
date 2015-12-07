@@ -68,6 +68,7 @@ class Ui_MainWindow(QMainWindow, Ui_MainWindowBase):
         self.clusteringEstimatorInit()
 
         self.filter = None
+        self.filterIO = None
         self.rmot   = None
         self.coords = None
 
@@ -191,12 +192,9 @@ class Ui_MainWindow(QMainWindow, Ui_MainWindowBase):
         if len(filePath) is not 0:
             logger.debug("Open Filter file: {0}".format(filePath))
 
-            filterIO = FilterIO(filePath)
-            print(filterIO.getFilterCode())
+            self.filterIO = FilterIO(filePath)
 
-            exec(filterIO.getFilterCode(), globals())
-            self.filter = filterOperation(self.cv_img)
-            self.filter.fgbg = filterIO.getBackgroundImg()
+            exec(self.filterIO.getFilterCode(), globals())
             self.evaluate()
 
     def saveCSVFile(self, activated=False, filePath = None):
@@ -234,105 +232,89 @@ class Ui_MainWindow(QMainWindow, Ui_MainWindowBase):
         self.outputGraphicsView.fitInView(self.outputScene.sceneRect(), QtCore.Qt.KeepAspectRatio)
 
     def evaluate(self):
-        if self.filter is not None:
-            img = self.filter.filterFunc(self.cv_img.copy())
-
-            nonZeroPos = np.transpose(np.nonzero(np.transpose(img)))
-
-            # TODO: Implement other estimator
-            # http://scikit-learn.org/stable/modules/classes.html#module-sklearn.mixture
-            # https://en.wikipedia.org/wiki/Variational_Bayesian_methods
-
-            # n_jobsでCPUの数を指定できる
-            # estimator = cluster.KMeans(n_clusters=self.clusterSizeNumSpinBox.value(), n_jobs=self.cpuCoreNumSpinBox.value())
-            # estimator.fit(nonZeroPos)
-
-            N = self.clusterSizeNumSpinBox.value()
-
-            centerPos = None
-            windows   = None
-
-            # Plot circle to self.cv_img
-            img = self.cv_img.copy()
-            # windows *= 10
-
-            if self.coords is None or len(self.coords[0])<=self.currentFrameNo:
-                try:
-                    centerPos, windows = self.Kmeans.getCentroids(nonZeroPos, N)
-                except ValueError:
-                    centerPos = np.array([[np.nan, np.nan] for i in range(N)])
-                    windows = np.array([[np.nan, np.nan] for i in range(N)])
-
-                # windows[:] = 100
-                # windows[:, 0] = 200
-                print(self.windowHeightSpinBox.value(), self.windowWidthSpinBox.value())
-                windows[:] = self.windowHeightSpinBox.value()
-                windows[:,0] = self.windowWidthSpinBox.value()
-
-                try:
-                    for p, w in zip(centerPos, windows):
-                        print(w)
-                        print(tuple(np.int64(p-w)), tuple(np.int64(p+w)))
-                        cv2.rectangle(img, tuple(np.int64(p-w)), tuple(np.int64(p+w)), (0,255,0), 1)
-                except OverflowError:
-                    centerPos = np.array([[np.nan, np.nan] for i in range(N)])
-                    windows = np.array([[np.nan, np.nan] for i in range(N)])
-
-                if self.coords is None:
-                    self.coords = [[p,] for p in centerPos]
-                    self.colors = np.random.randint(0, 255, (N, 3)).tolist()
-
-                self.withTracking = self.trackingCheckBox.isChecked()
-                if self.withTracking and centerPos[0][0] is not np.nan:
-                    if self.rmot is None:
-                        xs = np.concatenate((centerPos, np.zeros((centerPos.shape[0],2)), windows), axis=1)
-                        self.rmot = RMOT(xs)
-                        # self.track = [centerPos]
-                    else:
-                        try:
-                            # d = np.linalg.norm(centerPos[0]-centerPos[1])
-                            # if d<10:
-                            #     centerPos = centerPos[:1, :]
-                            #     windows = windows[:1, :]
-                            # elif d>40:
-                            #     d0 = np.linalg.norm(self.coords[0][-1] - centerPos[0])
-                            #     d1 = np.linalg.norm(self.coords[0][-1] - centerPos[1])
-                            #     if d1>30:
-                            #         centerPos = centerPos[:1, :]
-                            #         windows = windows[:1, :]
-                            #     else:
-                            #         centerPos = centerPos[1:, :]
-                            #         windows = windows[1:, :]
-
-
-                            zs = np.concatenate((centerPos,windows), axis=1)
-                            res = self.rmot.calculation(zs)
-                            for coord, p in zip(self.coords, res):
-                                coord.append(p[:2].copy())
-                        except Warning:
-                            print("foo")
+        try:
+            if self.filter is None:
+                if 'filterOperation' in globals():
+                    self.filter = filterOperation(self.cv_img)
+                    self.filter.fgbg = self.filterIO.getBackgroundImg()
+                    self.filter.isInit = True
                 else:
-                    for coord, p in zip(self.coords, centerPos):
-                        coord.append(p[:2].copy())
+                    return
+            else:
+                pass
+        except AttributeError:
+            return
 
-            for coord, color in zip(self.coords, self.colors):
-                if self.withTracking:
-                    frameDiff = 10
-                    for p in coord[max(0, self.currentFrameNo-frameDiff):self.currentFrameNo+frameDiff+1]:
-                        if p[0] is not np.nan:
-                            cv2.circle(img, tuple(np.int32(p[:2])), 5, color, -1)
+        img = self.filter.filterFunc(self.cv_img.copy())
+
+        nonZeroPos = np.transpose(np.nonzero(np.transpose(img)))
+
+        N = self.clusterSizeNumSpinBox.value()
+
+        centerPos = None
+        windows   = None
+
+        img = self.cv_img.copy()
+
+        if self.coords is None or len(self.coords[0])<=self.currentFrameNo:
+            try:
+                centerPos, windows = self.Kmeans.getCentroids(nonZeroPos, N)
+            except ValueError:
+                centerPos = np.array([[np.nan, np.nan] for i in range(N)])
+                windows = np.array([[np.nan, np.nan] for i in range(N)])
+
+            print(self.windowHeightSpinBox.value(), self.windowWidthSpinBox.value())
+            windows[:] = self.windowHeightSpinBox.value()
+            windows[:,0] = self.windowWidthSpinBox.value()
+
+            try:
+                for p, w in zip(centerPos, windows):
+                    print(w)
+                    print(tuple(np.int64(p-w)), tuple(np.int64(p+w)))
+                    cv2.rectangle(img, tuple(np.int64(p-w)), tuple(np.int64(p+w)), (0,255,0), 1)
+            except OverflowError:
+                centerPos = np.array([[np.nan, np.nan] for i in range(N)])
+                windows = np.array([[np.nan, np.nan] for i in range(N)])
+
+            if self.coords is None:
+                self.coords = [[p,] for p in centerPos]
+                self.colors = np.random.randint(0, 255, (N, 3)).tolist()
+
+            self.withTracking = self.trackingCheckBox.isChecked()
+            if self.withTracking and centerPos[0][0] is not np.nan:
+                if self.rmot is None:
+                    xs = np.concatenate((centerPos, np.zeros((centerPos.shape[0],2)), windows), axis=1)
+                    self.rmot = RMOT(xs)
                 else:
-                    if coord[self.currentFrameNo][0] is not np.nan:
-                        cv2.circle(img, tuple(np.int32(coord[self.currentFrameNo][:2])), 5, color, -1)
+                    try:
+                        zs = np.concatenate((centerPos,windows), axis=1)
+                        res = self.rmot.calculation(zs)
+                        for coord, p in zip(self.coords, res):
+                            coord.append(p[:2].copy())
+                    except Warning:
+                        print("foo")
+            else:
+                for coord, p in zip(self.coords, centerPos):
+                    coord.append(p[:2].copy())
+
+        for coord, color in zip(self.coords, self.colors):
+            if self.withTracking:
+                frameDiff = 10
+                for p in coord[max(0, self.currentFrameNo-frameDiff):self.currentFrameNo+frameDiff+1]:
+                    if p[0] is not np.nan:
+                        cv2.circle(img, tuple(np.int32(p[:2])), 5, color, -1)
+            else:
+                if coord[self.currentFrameNo][0] is not np.nan:
+                    cv2.circle(img, tuple(np.int32(coord[self.currentFrameNo][:2])), 5, color, -1)
 
 
-            self.outputScene.clear()
-            qimg = misc.cvMatToQImage(img)
-            pixmap = QPixmap.fromImage(qimg)
-            self.outputScene.addPixmap(pixmap)
+        self.outputScene.clear()
+        qimg = misc.cvMatToQImage(img)
+        pixmap = QPixmap.fromImage(qimg)
+        self.outputScene.addPixmap(pixmap)
 
-            self.outputGraphicsView.viewport().update()
-            self.outputGraphicsViewResized()
+        self.outputGraphicsView.viewport().update()
+        self.outputGraphicsViewResized()
 
 if __name__ == "__main__":
     app = QtWidgets.QApplication(sys.argv)
