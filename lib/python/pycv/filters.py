@@ -32,21 +32,17 @@ class Filter:
         return np.uint8(im_pow)
 
     @classmethod
-    def colorFilter(self,im_in,rgb, lab_dist):
-
-        bgr_img = np.array([[np.flipud(rgb)]], dtype=np.uint8)
-        lab_arr = cv2.cvtColor(bgr_img, cv2.COLOR_BGR2Lab)[0,0].astype(np.int32)
-        # lab_mat = np.full(im_in.shape, lab_arr);
-
-        im_lab = cv2.cvtColor(im_in, cv2.COLOR_BGR2Lab).astype(np.int32)
-
-        im_mask = np.linalg.norm(im_lab-lab_arr, axis=2).astype(np.float32)
-
-        im_mask = cv2.threshold(im_mask, lab_dist, 255, cv2.THRESH_BINARY_INV)[1].astype(np.uint8)
-
+    def colorFilter(self,im_in,rgb, dist):
+        im_mask = np.linalg.norm(im_in.astype(np.int32) - np.flipud(rgb), axis=2).astype(np.float32)
+        im_mask = cv2.threshold(im_mask, dist, 255, cv2.THRESH_BINARY_INV)[1].astype(np.uint8)
         im_dst = cv2.bitwise_and(im_in, im_in, mask=im_mask)
-
         return im_dst
+
+def colorFilter(im_in, rgb, dist):
+    im_mask = np.linalg.norm(im_in.astype(np.int32) - np.flipud(rgb), axis=2).astype(np.float32)
+    im_mask = cv2.threshold(im_mask, dist, 255, cv2.THRESH_BINARY_INV)[1].astype(np.uint8)
+    im_dst = cv2.bitwise_and(im_in, im_in, mask=im_mask)
+    return im_dst
 
 
 def main(argv):
@@ -56,7 +52,7 @@ def main(argv):
     im_in = cv2.imread(img_fn)
     # print(im_in)
 
-    im_hsv = Filter.colorFilter(im_in,[0,255,0],100)
+    im_hsv = colorFilter(im_in,[0,255,0],100)
     cv2.imshow("AA",im_hsv)
     cv2.waitKey(0)
     print(img_fn)

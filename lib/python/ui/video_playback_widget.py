@@ -123,6 +123,9 @@ class VideoPlaybackWidget(QtWidgets.QWidget, Ui_VideoPlaybackWidget):
         if filename is not None:
             try:
                 self.ret = vs_core.ffms2.Source(source=filename)
+                print(self.ret.format)
+                self.ret = vs_core.resize.Lanczos(self.ret, format=vs.RGB24)
+                print(self.ret.format)
             except vs.Error:
                 return False
 
@@ -198,30 +201,10 @@ class VideoPlaybackWidget(QtWidgets.QWidget, Ui_VideoPlaybackWidget):
             for i in range(self.ret.flags):
                 a = np.array(frame.get_read_array(i))
                 l.append(a)
-            l[1], l[2] = l[2], l[1]
-
-            y_shape = l[0].shape
-            for i in range(1, self.ret.flags):
-                l[i] = np.repeat(
-                        np.repeat(
-                            l[i],
-                            self.ret.format.subsampling_w+1,
-                            axis=1),
-                        self.ret.format.subsampling_h+1,
-                        axis=0)
-
-                li_shape = l[i].shape
-                if y_shape != li_shape:
-                    newArray = np.empty(y_shape, dtype=np.uint8)
-                    newArray[:-1, :-1] = l[i]
-                    l[i] = newArray
-                    if li_shape[0] < y_shape[0]:
-                        l[i][-1, :] = l[i][-2, :]
-                    elif li_shape[1] < y_shape[1]:
-                        l[i][:, -1] = l[i][:, -2]
+            l[0], l[2] = l[2], l[0]
 
             t = tuple(l)
-            frame = cv2.cvtColor(np.dstack(t), cv2.COLOR_YUV2BGR)
+            frame = np.dstack(t)
             self.currentFrameNo = frameNo
 
             return (True, frame)
