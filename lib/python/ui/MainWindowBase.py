@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file '.\MainWindowBase.ui'
 #
-# Created by: PyQt5 UI code generator 5.5
+# Created by: PyQt5 UI code generator 5.5.1
 #
 # WARNING! All changes made in this file will be lost!
 
@@ -125,10 +125,12 @@ class Ui_MainWindowBase(object):
         self.gridLayout.addWidget(self.gridWidget, 1, 0, 1, 1)
         MainWindowBase.setCentralWidget(self.centralwidget)
         self.menubar = QtWidgets.QMenuBar(MainWindowBase)
-        self.menubar.setGeometry(QtCore.QRect(0, 0, 1060, 21))
+        self.menubar.setGeometry(QtCore.QRect(0, 0, 1060, 24))
         self.menubar.setObjectName("menubar")
         self.menuFiles = QtWidgets.QMenu(self.menubar)
         self.menuFiles.setObjectName("menuFiles")
+        self.menuRun = QtWidgets.QMenu(self.menubar)
+        self.menuRun.setObjectName("menuRun")
         MainWindowBase.setMenuBar(self.menubar)
         self.statusbar = QtWidgets.QStatusBar(MainWindowBase)
         self.statusbar.setObjectName("statusbar")
@@ -145,6 +147,8 @@ class Ui_MainWindowBase(object):
         self.actionQuit.setObjectName("actionQuit")
         self.actionSaveCSVFile = QtWidgets.QAction(MainWindowBase)
         self.actionSaveCSVFile.setObjectName("actionSaveCSVFile")
+        self.actionRunObjectTracking = QtWidgets.QAction(MainWindowBase)
+        self.actionRunObjectTracking.setObjectName("actionRunObjectTracking")
         self.menuFiles.addAction(self.actionOpenVideo)
         self.menuFiles.addAction(self.actionOpenImage)
         self.menuFiles.addSeparator()
@@ -153,7 +157,9 @@ class Ui_MainWindowBase(object):
         self.menuFiles.addAction(self.actionSaveCSVFile)
         self.menuFiles.addSeparator()
         self.menuFiles.addAction(self.actionQuit)
+        self.menuRun.addAction(self.actionRunObjectTracking)
         self.menubar.addAction(self.menuFiles.menuAction())
+        self.menubar.addAction(self.menuRun.menuAction())
 
         self.retranslateUi(MainWindowBase)
         self.actionQuit.triggered.connect(MainWindowBase.close)
@@ -170,6 +176,7 @@ class Ui_MainWindowBase(object):
         self.label_3.setText(_translate("MainWindowBase", "Window height:"))
         self.resetButton.setText(_translate("MainWindowBase", "Reset"))
         self.menuFiles.setTitle(_translate("MainWindowBase", "Files"))
+        self.menuRun.setTitle(_translate("MainWindowBase", "Run"))
         self.actionOpenVideo.setText(_translate("MainWindowBase", "Open Video"))
         self.actionOpenImage.setText(_translate("MainWindowBase", "Open Image"))
         self.actionOpenFilterSetting.setText(_translate("MainWindowBase", "Open Filter Setting"))
@@ -177,5 +184,6 @@ class Ui_MainWindowBase(object):
         self.actionQuit.setText(_translate("MainWindowBase", "Quit"))
         self.actionQuit.setShortcut(_translate("MainWindowBase", "Ctrl+Q"))
         self.actionSaveCSVFile.setText(_translate("MainWindowBase", "Save to CSV"))
+        self.actionRunObjectTracking.setText(_translate("MainWindowBase", "Run Object Tracking"))
 
 from .video_playback_widget import VideoPlaybackWidget

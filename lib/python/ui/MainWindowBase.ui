@@ -87,7 +87,7 @@
            </widget>
           </item>
           <item>
-           <widget class="VideoPlaybackWidget" name="videoPlaybackWidget"/>
+           <widget class="VideoPlaybackWidget" name="videoPlaybackWidget" native="true"/>
           </item>
          </layout>
         </widget>
@@ -232,7 +232,7 @@
      <x>0</x>
      <y>0</y>
      <width>1060</width>
-     <height>21</height>
+     <height>24</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuFiles">
@@ -248,7 +248,14 @@
     <addaction name="separator"/>
     <addaction name="actionQuit"/>
    </widget>
+   <widget class="QMenu" name="menuRun">
+    <property name="title">
+     <string>Run</string>
+    </property>
+    <addaction name="actionRunObjectTracking"/>
+   </widget>
    <addaction name="menuFiles"/>
+   <addaction name="menuRun"/>
   </widget>
   <widget class="QStatusBar" name="statusbar"/>
   <action name="actionOpenVideo">
@@ -282,6 +289,11 @@
   <action name="actionSaveCSVFile">
    <property name="text">
     <string>Save to CSV</string>
+   </property>
+  </action>
+  <action name="actionRunObjectTracking">
+   <property name="text">
+    <string>Run Object Tracking</string>
    </property>
   </action>
  </widget>

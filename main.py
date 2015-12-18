@@ -17,7 +17,7 @@ elif __file__:
     currentDirPath = os.getcwd()
 
 from PyQt5 import QtCore, QtWidgets
-from PyQt5.QtWidgets import QGraphicsScene, QGraphicsView, QGraphicsPixmapItem, QFrame, QFileDialog, QMainWindow
+from PyQt5.QtWidgets import QGraphicsScene, QGraphicsView, QGraphicsPixmapItem, QFrame, QFileDialog, QMainWindow, QProgressDialog
 from PyQt5.QtGui import QPixmap, QImage, QIcon
 from PyQt5.QtCore import Qt
 
@@ -146,6 +146,8 @@ class Ui_MainWindow(QMainWindow, Ui_MainWindowBase):
 
         self.actionSaveCSVFile.triggered.connect(self.saveCSVFile)
 
+        self.actionRunObjectTracking.triggered.connect(self.runObjectTracking)
+
     def openVideoFile(self, activated=False, filePath = None):
         if filePath is None:
             filePath, _ = QFileDialog.getOpenFileName(None, 'Open Video File', userDir)
@@ -231,7 +233,7 @@ class Ui_MainWindow(QMainWindow, Ui_MainWindowBase):
     def outputGraphicsViewResized(self, event=None):
         self.outputGraphicsView.fitInView(self.outputScene.sceneRect(), QtCore.Qt.KeepAspectRatio)
 
-    def evaluate(self):
+    def evaluate(self, update=True):
         try:
             if self.filter is None:
                 if 'filterOperation' in globals():
@@ -271,7 +273,8 @@ class Ui_MainWindow(QMainWindow, Ui_MainWindowBase):
                 for p, w in zip(centerPos, windows):
                     print(w)
                     print(tuple(np.int64(p-w)), tuple(np.int64(p+w)))
-                    cv2.rectangle(img, tuple(np.int64(p-w)), tuple(np.int64(p+w)), (0,255,0), 1)
+                    if update:
+                        cv2.rectangle(img, tuple(np.int64(p-w)), tuple(np.int64(p+w)), (0,255,0), 1)
             except OverflowError:
                 centerPos = np.array([[np.nan, np.nan] for i in range(N)])
                 windows = np.array([[np.nan, np.nan] for i in range(N)])
@@ -297,24 +300,49 @@ class Ui_MainWindow(QMainWindow, Ui_MainWindowBase):
                 for coord, p in zip(self.coords, centerPos):
                     coord.append(p[:2].copy())
 
-        for coord, color in zip(self.coords, self.colors):
-            if self.withTracking:
-                frameDiff = 10
-                for p in coord[max(0, self.currentFrameNo-frameDiff):self.currentFrameNo+frameDiff+1]:
-                    if p[0] is not np.nan:
-                        cv2.circle(img, tuple(np.int32(p[:2])), 5, color, -1)
-            else:
-                if coord[self.currentFrameNo][0] is not np.nan:
-                    cv2.circle(img, tuple(np.int32(coord[self.currentFrameNo][:2])), 5, color, -1)
+        if update:
+            for coord, color in zip(self.coords, self.colors):
+                if self.withTracking:
+                    frameDiff = 10
+                    for p in coord[max(0, self.currentFrameNo-frameDiff):self.currentFrameNo+frameDiff+1]:
+                        if p[0] is not np.nan:
+                            cv2.circle(img, tuple(np.int32(p[:2])), 5, color, -1)
+                else:
+                    if coord[self.currentFrameNo][0] is not np.nan:
+                        cv2.circle(img, tuple(np.int32(coord[self.currentFrameNo][:2])), 5, color, -1)
 
 
-        self.outputScene.clear()
-        qimg = misc.cvMatToQImage(img)
-        pixmap = QPixmap.fromImage(qimg)
-        self.outputScene.addPixmap(pixmap)
+            self.outputScene.clear()
+            qimg = misc.cvMatToQImage(img)
+            pixmap = QPixmap.fromImage(qimg)
+            self.outputScene.addPixmap(pixmap)
 
-        self.outputGraphicsView.viewport().update()
-        self.outputGraphicsViewResized()
+            self.outputGraphicsView.viewport().update()
+            self.outputGraphicsViewResized()
+
+    def runObjectTracking(self):
+        if self.filter is None or not self.videoPlaybackWidget.isOpened():
+            return
+        minFrame = self.videoPlaybackWidget.currentFrameNo
+        maxFrame = self.videoPlaybackWidget.getMaxFramePos()
+        numFrames = maxFrame-minFrame
+        progress = QProgressDialog("Running...", "Abort", 0, numFrames, self)
+
+        progress.setWindowModality(Qt.WindowModal)
+
+        currentFrameNo = self.videoPlaybackWidget.currentFrameNo
+        for i, frameNo in enumerate(range(minFrame, maxFrame+1)):
+            progress.setValue(i)
+            if progress.wasCanceled():
+                break
+
+            ret, frame = self.videoPlaybackWidget.readFrame(frameNo)
+            self.cv_img = frame
+            self.currentFrameNo = frameNo
+            self.evaluate(False)
+
+        self.videoPlaybackWidget.moveToFrame(currentFrameNo)
+        progress.setValue(numFrames)
 
 if __name__ == "__main__":
     app = QtWidgets.QApplication(sys.argv)
