@@ -36,6 +36,8 @@ from lib.python import clusteringEstimator
 from lib.python.rmot import RMOT
 from lib.python.FilterIO.FilterIO import FilterIO
 
+from lib.python.group_tracker import CustomGMM
+
 from lib.python.pycv import filters
 
 from lib.python.ui.MainWindowBase import Ui_MainWindowBase
@@ -258,58 +260,29 @@ class Ui_MainWindow(QMainWindow, Ui_MainWindowBase):
 
         img = self.cv_img.copy()
 
+        if not hasattr(self, 'gmm'):
+            self.gmm = CustomGMM(n_components=N, covariance_type='full', n_iter=1000)
+
         if self.coords is None or len(self.coords[0])<=self.currentFrameNo:
             try:
-                centerPos, windows = self.Kmeans.getCentroids(nonZeroPos, N)
+                self.gmm._fit(nonZeroPos, n_k_means=N)
+                centerPos = self.gmm.means_
             except ValueError:
                 centerPos = np.array([[np.nan, np.nan] for i in range(N)])
-                windows = np.array([[np.nan, np.nan] for i in range(N)])
-
-            print(self.windowHeightSpinBox.value(), self.windowWidthSpinBox.value())
-            windows[:] = self.windowHeightSpinBox.value()
-            windows[:,0] = self.windowWidthSpinBox.value()
-
-            try:
-                for p, w in zip(centerPos, windows):
-                    print(w)
-                    print(tuple(np.int64(p-w)), tuple(np.int64(p+w)))
-                    if update:
-                        cv2.rectangle(img, tuple(np.int64(p-w)), tuple(np.int64(p+w)), (0,255,0), 1)
-            except OverflowError:
-                centerPos = np.array([[np.nan, np.nan] for i in range(N)])
-                windows = np.array([[np.nan, np.nan] for i in range(N)])
 
             if self.coords is None:
                 self.coords = [[p,] for p in centerPos]
                 self.colors = np.random.randint(0, 255, (N, 3)).tolist()
-
-            self.withTracking = self.trackingCheckBox.isChecked()
-            if self.withTracking and centerPos[0][0] is not np.nan:
-                if self.rmot is None:
-                    xs = np.concatenate((centerPos, np.zeros((centerPos.shape[0],2)), windows), axis=1)
-                    self.rmot = RMOT(xs)
-                else:
-                    try:
-                        zs = np.concatenate((centerPos,windows), axis=1)
-                        res = self.rmot.calculation(zs)
-                        for coord, p in zip(self.coords, res):
-                            coord.append(p[:2].copy())
-                    except Warning:
-                        print("foo")
             else:
                 for coord, p in zip(self.coords, centerPos):
                     coord.append(p[:2].copy())
 
         if update:
             for coord, color in zip(self.coords, self.colors):
-                if self.withTracking:
-                    frameDiff = 10
-                    for p in coord[max(0, self.currentFrameNo-frameDiff):self.currentFrameNo+frameDiff+1]:
-                        if p[0] is not np.nan:
-                            cv2.circle(img, tuple(np.int32(p[:2])), 5, color, -1)
-                else:
-                    if coord[self.currentFrameNo][0] is not np.nan:
-                        cv2.circle(img, tuple(np.int32(coord[self.currentFrameNo][:2])), 5, color, -1)
+                frameDiff = 10
+                for p in coord[max(0, self.currentFrameNo-frameDiff):self.currentFrameNo+frameDiff+1]:
+                    if p[0] is not np.nan:
+                        cv2.circle(img, tuple(np.int32(p[:2])), 5, color, -1)
 
 
             self.outputScene.clear()
