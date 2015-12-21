@@ -261,7 +261,7 @@ class Ui_MainWindow(QMainWindow, Ui_MainWindowBase):
         img = self.cv_img.copy()
 
         if not hasattr(self, 'gmm'):
-            self.gmm = CustomGMM(n_components=N, covariance_type='full', n_iter=1000)
+            self.gmm = CustomGMM(n_components=N, covariance_type='full', n_iter=2000)
 
         if self.coords is None or len(self.coords[0])<=self.currentFrameNo:
             try:

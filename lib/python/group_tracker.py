@@ -1,3 +1,5 @@
+# Tsukasa Fukunaga*, Shoko Kubota, Shoji Oda, and Wataru Iwasaki*. GroupTracker: Video Tracking System for Multiple Animals under Severe Occlusion. Computational Biology and Chemistry 57, 39-45. (2015)
+
 from sklearn import mixture, cluster
 import numpy as np
 from numpy import linalg as LA
@@ -10,19 +12,22 @@ except SystemError:
 EPS = np.finfo(float).eps
 
 class CustomGMM(mixture.GMM):
-    alpha = 4
-    max_dist = 80
+    # TODO:要調整（というより，UIから調整可能にすること）
+    alpha = 0.7
+    max_dist = 5
     hungarian = Hungarian()
 
     def _fit(self, X, y=None, do_prediction=False, n_k_means=None, lost_mode=False):
         if n_k_means is None:
             n_k_means = self.n_components
-        if hasattr(self, 'weights_'):
-            self.prev_weights_ = self.weights_.copy()
-        if hasattr(self, 'means_'):
-            self.prev_means_ = self.means_.copy()
-        if hasattr(self, 'covars_'):
-            self.prev_covars_ = self.covars_.copy()
+
+        if not lost_mode:
+            if hasattr(self, 'weights_'):
+                self.prev_weights_ = self.weights_.copy()
+            if hasattr(self, 'means_'):
+                self.prev_means_ = self.means_.copy()
+            if hasattr(self, 'covars_'):
+                self.prev_covars_ = self.covars_.copy()
 
         resp = super(CustomGMM, self)._fit(X, y, do_prediction)
         if self.init_params != '':
@@ -33,7 +38,8 @@ class CustomGMM(mixture.GMM):
             self.init_params = ''
         else:
             log_likelihoods, responsibilities = self.score_samples(X)
-            if not lost_mode and np.fabs(log_likelihoods.mean() - self.log_likelihood) > self.alpha:
+            if not lost_mode and log_likelihoods.mean() - self.log_likelihood < -self.alpha:
+            # if not lost_mode and (np.fabs(log_likelihoods.mean() - self.log_likelihood) > self.alpha or np.any(dists>self.max_dist)):
                 print('Lost likeli: {0}'.format(log_likelihoods.mean()))
                 means = cluster.KMeans(
                         n_clusters=n_k_means,
@@ -58,19 +64,26 @@ class CustomGMM(mixture.GMM):
                 self.hungarian.calculate(cost_mtx)
 
                 for pos in self.hungarian.get_results():
-                    if cost_mtx[pos] < self.max_dist:
-                        self.means_[pos[1], :] = means[pos[0], :]
-                    else:
-                        self.means_[pos[1], :] = self.prev_means_[pos[1], :]
+                    self.means_[pos[1], :] = means[pos[0], :]
 
                 self.weights_ = self.prev_weights_
                 self.covars_ = self.prev_covars_
-                # resp = self._fit(X, y, do_prediction, n_k_means, True)
+                resp = self._fit(X, y, do_prediction, n_k_means, True)
 
-                log_likelihoods, responsibilities = self.score_samples(X)
-                self.log_likelihood = log_likelihoods.mean()
+                dists = LA.norm(self.means_, axis=1)
+                for i, dist in enumerate(dists):
+                    if dist < EPS:
+                        self.means_[i, :] = self.prev_means_[i, :]
+                        self.covars_[i, :] = self.prev_covars_[i, :]
 
-        print('End likeli: {0}'.format(self.log_likelihood))
+            dists = LA.norm(self.means_, axis=1)
+            for i, dist in enumerate(dists):
+                if dist < EPS:
+                    self.means_[i, :] = self.prev_means_[i, :]
+                    self.covars_[i, :] = self.prev_covars_[i, :]
+
+        log_likelihoods, responsibilities = self.score_samples(X)
+        print('End likeli: {0}'.format(log_likelihoods.mean()))
         return resp
 
     def _do_mstep(self, X, responsibilities, params, min_covar=0):
