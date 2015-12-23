@@ -98,6 +98,7 @@ class Ui_MainWindow(QMainWindow, Ui_MainWindowBase):
         self.radiusSpinBox.valueChanged.connect(self.radiusSpinBoxValueChanged)
         self.lineWidthSpinBox.valueChanged.connect(self.lineWidthSpinBoxValueChanged)
         self.overlayFrameNoSpinBox.valueChanged.connect(self.overlayFrameNoSpinBoxValueChanged)
+        self.stackedWidget.currentChanged.connect(self.stackedWidgetCurrentChanged)
 
         self.filter = None
         self.filterIO = None
@@ -177,12 +178,16 @@ class Ui_MainWindow(QMainWindow, Ui_MainWindowBase):
             self.stackedWidget.addWidget(widget)
 
             action = self.menuAlgorithms.addAction(widget.get_name())
-            def action_triggered(activated=False):
-                if widget is not self.stackedWidget.currentWidget():
-                    self.stackedWidget.setCurrentWidget(widget)
-                else:
-                    pass
-            action.triggered.connect(action_triggered)
+            action.triggered.connect(self.generateAlgorithmsMenuClicked(widget))
+
+    def generateAlgorithmsMenuClicked(self, widget):
+        def action_triggered(activated=False):
+            print('trig {0}'.format(widget))
+            if widget is not self.stackedWidget.currentWidget():
+                self.stackedWidget.setCurrentWidget(widget)
+            else:
+                pass
+        return action_triggered
 
     def openVideoFile(self, activated=False, filePath = None):
         if filePath is None:
@@ -259,6 +264,11 @@ class Ui_MainWindow(QMainWindow, Ui_MainWindowBase):
         if hasattr(self, 'trackingPathGroup'):
             self.trackingPathGroup.setOverlayFrameNo(i)
 
+    def stackedWidgetCurrentChanged(self, i):
+        print('current changed: {0}'.format(i))
+        self.stackedWidget.currentWidget().estimator_init()
+        self.reset_dataframe()
+
     def updateInputGraphicsView(self):
         if hasattr(self, 'inputPixmapItem'):
             self.inputScene.removeItem(self.inputPixmapItem)
@@ -285,6 +295,9 @@ class Ui_MainWindow(QMainWindow, Ui_MainWindowBase):
             return
 
         self.df[:] = np.nan
+        if hasattr(self, 'rect_items'):
+            for rect_item in self.rect_items:
+                rect_item.hide()
         self.videoPlaybackWidget.moveToFrame(0)
 
     def restart_dataframe(self):
