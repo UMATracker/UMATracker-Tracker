@@ -100,7 +100,8 @@ class VideoPlaybackWidget(QtWidgets.QWidget, Ui_VideoPlaybackWidget):
 
             if frameNo != self.playbackSlider.value():
                 self.playbackSlider.setValue(frameNo)
-            self.setFrame(frame, frameNo)
+            else:
+                self.setFrame(frame, frameNo)
 
     def getFramePos(self):
         if self.isOpened():
@@ -180,10 +181,6 @@ class VideoPlaybackWidget(QtWidgets.QWidget, Ui_VideoPlaybackWidget):
         # logger.debug("Action: {0}".format(action))
         self.stop()
         if self.cap.isOpened():
-            # TODO: 行儀の悪い映像だと，末尾のあたりの取得に（ここではsetの時点で）失敗・一時フリーズする．
-            #       しかも，これといったエラーが出ずに進行．
-            #       要検証．
-
             self.moveToFrame(self.playbackSlider.value())
 
 if __name__ == "__main__":

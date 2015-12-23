@@ -219,7 +219,8 @@ class VideoPlaybackWidget(QtWidgets.QWidget, Ui_VideoPlaybackWidget):
 
             if changeSlider and frameNo != self.playbackSlider.value():
                 self.playbackSlider.setValue(frameNo)
-            self.setFrame(frame, frameNo)
+            else:
+                self.setFrame(frame, frameNo)
 
     def getFramePos(self):
         if self.isOpened():

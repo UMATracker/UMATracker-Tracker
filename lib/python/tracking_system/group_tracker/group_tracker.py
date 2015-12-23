@@ -11,11 +11,14 @@ except SystemError:
 
 EPS = np.finfo(float).eps
 
-class CustomGMM(mixture.GMM):
+class GroupTrackerGMM(mixture.GMM):
     # TODO:要調整（というより，UIから調整可能にすること）
     alpha = 0.7
     max_dist = 5
     hungarian = Hungarian()
+
+    def set_likelihood_diff_threshold(self, th):
+        self.alpha = th
 
     def _fit(self, X, y=None, do_prediction=False, n_k_means=None, lost_mode=False):
         if n_k_means is None:
@@ -29,7 +32,7 @@ class CustomGMM(mixture.GMM):
             if hasattr(self, 'covars_'):
                 self.prev_covars_ = self.covars_.copy()
 
-        resp = super(CustomGMM, self)._fit(X, y, do_prediction)
+        resp = super(GroupTrackerGMM, self)._fit(X, y, do_prediction)
         if self.init_params != '':
             self.lambdas = np.sort(LA.eigvals(self.covars_))
             log_likelihoods, responsibilities = self.score_samples(X)
@@ -154,7 +157,7 @@ if __name__ == '__main__':
               .7 * np.random.randn(n_samples, 2) + np.array([-6, 3])]
 
     # Fit a mixture of Gaussians with EM using five components
-    gmm = CustomGMM(n_components=2, covariance_type='full', n_iter=1000)
+    gmm = GroupTrackerGMM(n_components=2, covariance_type='full', n_iter=1000)
     gmm.fit(X)
     X += np.array([0.,-10.])
     gmm.fit(X)

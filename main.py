@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 
 import os, sys, six
+from itertools import chain
 
 if six.PY2:
     reload(sys)
@@ -16,10 +17,40 @@ if getattr(sys, 'frozen', False):
 elif __file__:
     currentDirPath = os.getcwd()
 
+
+import pkgutil, importlib
+
+def gen_init_py(root):
+    root = os.path.join(*root)
+    finit = '__init__.py'
+
+    for dirname, dirs, fnames in os.walk(root):
+        if '__pycache__' in dirname:
+            return
+
+        fnames = [
+                os.path.splitext(fname)[0] for fname in fnames
+                if fname.lower().endswith('.py') and fname!=finit
+                ]
+        with open(os.path.join(dirname, finit), 'w+') as init_py_file:
+            init_py_file.write('__all__ = {0}'.format(fnames))
+
+def get_modules(root):
+    for _, name, is_package in pkgutil.walk_packages([os.path.join(*root)]):
+        if is_package:
+            for module in get_modules(root + [name]):
+                yield module
+        else:
+            yield root + [name]
+
+# TODO:パッケージ化したときにどういう挙動をするか要チェック
+tracking_system_path = ['lib', 'python', 'tracking_system']
+gen_init_py(tracking_system_path)
+
 from PyQt5 import QtCore, QtWidgets
-from PyQt5.QtWidgets import QGraphicsScene, QGraphicsView, QGraphicsPixmapItem, QFrame, QFileDialog, QMainWindow, QProgressDialog
+from PyQt5.QtWidgets import QGraphicsScene, QGraphicsView, QGraphicsPixmapItem, QFrame, QFileDialog, QMainWindow, QProgressDialog, QGraphicsRectItem
 from PyQt5.QtGui import QPixmap, QImage, QIcon
-from PyQt5.QtCore import Qt
+from PyQt5.QtCore import Qt, QRectF, QPointF
 
 import cv2
 import numpy as np
@@ -33,13 +64,11 @@ import icon
 
 from lib.python import misc
 from lib.python import clusteringEstimator
-from lib.python.rmot import RMOT
 from lib.python.FilterIO.FilterIO import FilterIO
-
-from lib.python.group_tracker import CustomGMM
 
 from lib.python.pycv import filters
 
+from lib.python.ui.tracking_path_group import TrackingPathGroup
 from lib.python.ui.MainWindowBase import Ui_MainWindowBase
 
 
@@ -67,12 +96,13 @@ class Ui_MainWindow(QMainWindow, Ui_MainWindowBase):
         self.videoPlaybackInit()
         self.imgInit()
         self.menuInit()
-        self.clusteringEstimatorInit()
+
+        self.radiusSpinBox.valueChanged.connect(self.radiusSpinBoxValueChanged)
+        self.lineWidthSpinBox.valueChanged.connect(self.lineWidthSpinBoxValueChanged)
+        self.overlayFrameNoSpinBox.valueChanged.connect(self.overlayFrameNoSpinBoxValueChanged)
 
         self.filter = None
         self.filterIO = None
-        self.rmot   = None
-        self.coords = None
 
     def dragEnterEvent(self,event):
         event.acceptProposedAction()
@@ -101,25 +131,17 @@ class Ui_MainWindow(QMainWindow, Ui_MainWindowBase):
         elif self.openVideoFile(filePath=filePath):
             return
 
-    def clusteringEstimatorInit(self):
-        self.Kmeans = clusteringEstimator.kmeansEstimator()
-        self.GMM = clusteringEstimator.gmmEstimator()
-
-        self.resetButton.pressed.connect(self.reset)
-
     def reset(self):
         self.videoPlaybackWidget.stop()
-        self.coords = None
-        self.rmot = None
         self.videoPlaybackWidget.moveToFrame(0)
 
     def videoPlaybackInit(self):
         self.videoPlaybackWidget.hide()
         self.videoPlaybackWidget.frameChanged.connect(self.setFrame, type=Qt.QueuedConnection)
 
-
     def setFrame(self, frame, frameNo):
         if frame is not None:
+            print('set')
             self.cv_img = frame
             self.currentFrameNo = frameNo
             self.updateInputGraphicsView()
@@ -127,19 +149,9 @@ class Ui_MainWindow(QMainWindow, Ui_MainWindowBase):
         return
 
     def imgInit(self):
-        # self.cv_img = cv2.imread(os.path.join(filePath.sampleDataPath,"color_filter_test.png"))
-
         self.inputScene = QGraphicsScene()
         self.inputGraphicsView.setScene(self.inputScene)
         self.inputGraphicsView.resizeEvent = self.inputGraphicsViewResized
-
-        self.outputScene = QGraphicsScene()
-        self.outputGraphicsView.setScene(self.outputScene)
-        self.outputGraphicsView.resizeEvent = self.outputGraphicsViewResized
-
-        # qimg = misc.cvMatToQImage(self.cv_img)
-        # pixmap = QPixmap.fromImage(qimg)
-        # self.inputScene.addPixmap(pixmap)
 
     def menuInit(self):
         self.actionOpenVideo.triggered.connect(self.openVideoFile)
@@ -149,6 +161,30 @@ class Ui_MainWindow(QMainWindow, Ui_MainWindowBase):
         self.actionSaveCSVFile.triggered.connect(self.saveCSVFile)
 
         self.actionRunObjectTracking.triggered.connect(self.runObjectTracking)
+
+        for module_path in get_modules(tracking_system_path):
+            module_str = '.'.join(module_path)
+            module = importlib.import_module(module_str)
+
+            if not hasattr(module, 'Widget'):
+                continue
+
+            class_def = getattr(module, "Widget")
+            if not issubclass(class_def, QtWidgets.QWidget):
+                continue
+
+            widget = class_def(self.stackedWidget)
+            widget.reset.connect(self.reset_dataframe)
+            widget.restart.connect(self.restart_dataframe)
+            self.stackedWidget.addWidget(widget)
+
+            action = self.menuAlgorithms.addAction(widget.get_name())
+            def action_triggered(activated=False):
+                if widget is not self.stackedWidget.currentWidget():
+                    self.stackedWidget.setCurrentWidget(widget)
+                else:
+                    pass
+            action.triggered.connect(action_triggered)
 
     def openVideoFile(self, activated=False, filePath = None):
         if filePath is None:
@@ -202,29 +238,40 @@ class Ui_MainWindow(QMainWindow, Ui_MainWindowBase):
             self.evaluate()
 
     def saveCSVFile(self, activated=False, filePath = None):
-        if self.coords is not None:
+        if hasattr(self, 'df'):
             filePath, _ = QFileDialog.getSaveFileName(None, 'Save CSV File', userDir, "CSV files (*.csv)")
 
             if len(filePath) is not 0:
                 logger.debug("Saving CSV file: {0}".format(filePath))
-                axis = ['x{0}', 'y{0}']
-                a = np.array(self.coords)
-                d = dict((axe.format(i), a[i,:,j]) for i in range(a.shape[0]) for axe,j in zip(axis, range(2)))
-                col = [axe.format(i) for i in range(a.shape[0]) for axe in axis]
-                df = pd.DataFrame(d)[col]
 
+                df = self.df[pd.notnull(self.df).any(axis=1)].copy()
+                columns = ['x{0},y{0}'.format(i).split(',') for i in range(int(len(df.columns)/2))]
+                df.columns = list(chain.from_iterable(columns))
                 df.to_csv(filePath)
 
+    def radiusSpinBoxValueChanged(self, i):
+        if hasattr(self, 'trackingPathGroup'):
+            self.trackingPathGroup.setRadius(i)
+
+    def lineWidthSpinBoxValueChanged(self, i):
+        if hasattr(self, 'trackingPathGroup'):
+            self.trackingPathGroup.setLineWidth(i)
+
+    def overlayFrameNoSpinBoxValueChanged(self, i):
+        if hasattr(self, 'trackingPathGroup'):
+            self.trackingPathGroup.setOverlayFrameNo(i)
+
     def updateInputGraphicsView(self):
-        self.inputScene.clear()
+        if hasattr(self, 'inputPixmapItem'):
+            self.inputScene.removeItem(self.inputPixmapItem)
+
         qimg = misc.cvMatToQImage(self.cv_img)
         pixmap = QPixmap.fromImage(qimg)
 
+        self.inputPixmapItem = QGraphicsPixmapItem(pixmap)
         rect = QtCore.QRectF(pixmap.rect())
         self.inputScene.setSceneRect(rect)
-        self.outputScene.setSceneRect(rect)
-
-        self.inputScene.addPixmap(pixmap)
+        self.inputScene.addItem(self.inputPixmapItem)
 
         self.inputGraphicsView.viewport().update()
         self.inputGraphicsViewResized()
@@ -232,10 +279,35 @@ class Ui_MainWindow(QMainWindow, Ui_MainWindowBase):
     def inputGraphicsViewResized(self, event=None):
         self.inputGraphicsView.fitInView(self.inputScene.sceneRect(), QtCore.Qt.KeepAspectRatio)
 
-    def outputGraphicsViewResized(self, event=None):
-        self.outputGraphicsView.fitInView(self.outputScene.sceneRect(), QtCore.Qt.KeepAspectRatio)
+    def updatePath(self):
+        self.trackingPathGroup.setPoints(self.currentFrameNo)
+
+    def reset_dataframe(self):
+        if not hasattr(self, 'df'):
+            return
+
+        self.df[:] = np.nan
+        self.videoPlaybackWidget.moveToFrame(0)
+
+    def restart_dataframe(self):
+        if not hasattr(self, 'df'):
+            return
+
+        self.df.loc[self.currentFrameNo+1:] = np.nan
+        widget = self.stackedWidget.currentWidget()
+        array = self.df.loc[self.currentFrameNo].as_matrix()
+        widget.reset_estimator(array.reshape((array.shape[0]/2, 2)))
 
     def evaluate(self, update=True):
+        print('eval')
+        if hasattr(self, 'df') and np.all(pd.notnull(self.df.loc[self.currentFrameNo])):
+            self.updatePath()
+            if hasattr(self, 'rect_items'):
+                for rect_item in self.rect_items:
+                    rect_item.hide()
+            return
+
+        # TODO:簡略化すること
         try:
             if self.filter is None:
                 if 'filterOperation' in globals():
@@ -250,60 +322,63 @@ class Ui_MainWindow(QMainWindow, Ui_MainWindowBase):
             return
 
         img = self.filter.filterFunc(self.cv_img.copy())
+        res = self.stackedWidget.currentWidget().track(self.cv_img.copy(), img)
 
-        nonZeroPos = np.transpose(np.nonzero(np.transpose(img)))
+        if 'rect' in res[0]:
+            if not hasattr(self, 'rect_items') or len(self.rect_items)!=len(res):
+                if hasattr(self, 'rect_items'):
+                    [self.inputScene.removeItem(item) for item in self.rect_items]
 
-        N = self.clusterSizeNumSpinBox.value()
+                self.rect_items = [QGraphicsRectItem() for i in range(len(res))]
+                for rect_item in self.rect_items:
+                    rect_item.setZValue(1000)
+                    self.inputScene.addItem(rect_item)
 
-        centerPos = None
-        windows   = None
+            for rect_item, res_item in zip(self.rect_items, res):
+                rect = res_item['rect']
+                rect_item.setRect(QRectF(QPointF(*rect['topLeft']), QPointF(*rect['bottomRight'])))
 
-        img = self.cv_img.copy()
+        if 'position' in res[0]:
+            max_pos = self.videoPlaybackWidget.getMaxFramePos()
+            if not hasattr(self, 'df') or len(self.df.index)!=max_pos or len(self.df.columns.levels[0])!=len(res):
+                col = pd.MultiIndex.from_product([range(len(res)), ['x','y']])
+                self.df = pd.DataFrame(index=range(max_pos), columns=col, dtype=np.float64)
 
-        if not hasattr(self, 'gmm'):
-            self.gmm = CustomGMM(n_components=N, covariance_type='full', n_iter=2000)
+                if hasattr(self, 'trackingPathGroup'):
+                    self.inputScene.removeItem(self.trackingPathGroup)
+                self.trackingPathGroup = TrackingPathGroup()
+                self.trackingPathGroup.setRect(self.inputScene.sceneRect())
+                lw = self.trackingPathGroup.autoAdjustLineWidth(self.cv_img.shape)
+                self.lineWidthSpinBox.setValue(lw)
+                r = self.trackingPathGroup.autoAdjustRadius(self.cv_img.shape)
+                self.radiusSpinBox.setValue(r)
+                self.inputScene.addItem(self.trackingPathGroup)
 
-        if self.coords is None or len(self.coords[0])<=self.currentFrameNo:
-            try:
-                self.gmm._fit(nonZeroPos, n_k_means=N)
-                centerPos = self.gmm.means_
-            except ValueError:
-                centerPos = np.array([[np.nan, np.nan] for i in range(N)])
-
-            if self.coords is None:
-                self.coords = [[p,] for p in centerPos]
-                self.colors = np.random.randint(0, 255, (N, 3)).tolist()
-            else:
-                for coord, p in zip(self.coords, centerPos):
-                    coord.append(p[:2].copy())
+                self.trackingPathGroup.setDataFrame(self.df)
+            for i, dic in enumerate(res):
+                self.df.loc[self.currentFrameNo, i] = dic['position']
 
         if update:
-            for coord, color in zip(self.coords, self.colors):
-                frameDiff = 10
-                for p in coord[max(0, self.currentFrameNo-frameDiff):self.currentFrameNo+frameDiff+1]:
-                    if p[0] is not np.nan:
-                        cv2.circle(img, tuple(np.int32(p[:2])), 5, color, -1)
+            if 'rect' in res[0]:
+                for rect_item, res_item in zip(self.rect_items, res):
+                    rect = res_item['rect']
+                    rect_item.setRect(QRectF(QPointF(*rect['topLeft']), QPointF(*rect['bottomRight'])))
+                    rect_item.show()
 
-
-            self.outputScene.clear()
-            qimg = misc.cvMatToQImage(img)
-            pixmap = QPixmap.fromImage(qimg)
-            self.outputScene.addPixmap(pixmap)
-
-            self.outputGraphicsView.viewport().update()
-            self.outputGraphicsViewResized()
+            self.updatePath()
+            self.updateInputGraphicsView()
 
     def runObjectTracking(self):
         if self.filter is None or not self.videoPlaybackWidget.isOpened():
             return
-        minFrame = self.videoPlaybackWidget.currentFrameNo
+        minFrame = self.currentFrameNo
         maxFrame = self.videoPlaybackWidget.getMaxFramePos()
         numFrames = maxFrame-minFrame
         progress = QProgressDialog("Running...", "Abort", 0, numFrames, self)
 
         progress.setWindowModality(Qt.WindowModal)
 
-        currentFrameNo = self.videoPlaybackWidget.currentFrameNo
+        currentFrameNo = self.currentFrameNo
         for i, frameNo in enumerate(range(minFrame, maxFrame+1)):
             progress.setValue(i)
             if progress.wasCanceled():
