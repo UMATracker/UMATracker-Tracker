@@ -34,7 +34,7 @@ class Widget(Ui_group_tracker_widget, QtWidgets.QWidget):
         self.gmm = None
 
     def reset_estimator(self, points):
-        if hasattr(self, 'gmm'):
+        if self.gmm is not None:
             self.gmm.means_ = points
 
     def get_name(self):

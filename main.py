@@ -54,7 +54,6 @@ from PyQt5.QtCore import Qt, QRectF, QPointF
 
 import cv2
 import numpy as np
-from sklearn import cluster
 
 import pandas as pd
 
@@ -63,7 +62,6 @@ import filePath
 import icon
 
 from lib.python import misc
-from lib.python import clusteringEstimator
 from lib.python.FilterIO.FilterIO import FilterIO
 
 from lib.python.pycv import filters
