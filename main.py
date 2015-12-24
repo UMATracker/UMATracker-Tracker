@@ -21,7 +21,7 @@ elif __file__:
 import pkgutil, importlib
 
 def gen_init_py(root):
-    root = os.path.join(*root)
+    root = os.path.join(*([currentDirPath,] + root))
     finit = '__init__.py'
 
     for dirname, dirs, fnames in os.walk(root):
@@ -32,18 +32,21 @@ def gen_init_py(root):
                 os.path.splitext(fname)[0] for fname in fnames
                 if fname.lower().endswith('.py') and fname!=finit
                 ]
+        print(dirname)
+        print(fnames)
         with open(os.path.join(dirname, finit), 'w+') as init_py_file:
             init_py_file.write('__all__ = {0}'.format(fnames))
 
 def get_modules(root):
-    for _, name, is_package in pkgutil.walk_packages([os.path.join(*root)]):
+    for _, name, is_package in pkgutil.walk_packages([os.path.join(*([currentDirPath,] + root))]):
         if is_package:
-            for module in get_modules(root + [name]):
+            for module in get_modules(root + [name,]):
                 yield module
         else:
             yield root + [name]
 
 # TODO:パッケージ化したときにどういう挙動をするか要チェック
+sys.path.append(currentDirPath)
 tracking_system_path = ['lib', 'python', 'tracking_system']
 gen_init_py(tracking_system_path)
 
@@ -54,7 +57,8 @@ from PyQt5.QtCore import Qt, QRectF, QPointF
 
 import cv2
 import numpy as np
-
+import sklearn
+import numba
 import pandas as pd
 
 import filePath
