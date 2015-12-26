@@ -71,6 +71,7 @@ from lib.python.pycv import filters
 from lib.python.ui.tracking_path_group import TrackingPathGroup
 from lib.python.ui.MainWindowBase import Ui_MainWindowBase
 
+from lib.python.ui.movable_arrow import MovableArrow
 
 sampleDataPath = os.path.join(currentDirPath,"data")
 userDir        = os.path.expanduser('~')
@@ -355,7 +356,7 @@ class Ui_MainWindow(QMainWindow, Ui_MainWindowBase):
             max_pos = self.videoPlaybackWidget.getMaxFramePos()
             if not hasattr(self, 'df') or len(self.df.index)!=max_pos or len(self.df.columns.levels[0])!=len(res):
                 col = pd.MultiIndex.from_product([range(len(res)), ['x','y']])
-                self.df = pd.DataFrame(index=range(max_pos), columns=col, dtype=np.float64)
+                self.df = pd.DataFrame(index=range(max_pos+1), columns=col, dtype=np.float64)
 
                 if hasattr(self, 'trackingPathGroup'):
                     self.inputScene.removeItem(self.trackingPathGroup)
