@@ -1,13 +1,14 @@
 import os
 from distutils.sysconfig import get_python_lib
 
-datas = [('./data', 'data'),]
+datas = [('./data', 'data'),
+        ('./lib/python/tracking_system', 'lib/python/tracking_system'),]
 
 a = Analysis(['./main.py'],
         pathex=['./'],
         binaries=None,
         datas=datas,
-        hiddenimports=[],
+        hiddenimports=['sklearn', 'numpy', 'numba'],
         hookspath=['./hooks',],
         runtime_hooks=None,
         excludes=None,
@@ -67,7 +68,7 @@ exe = EXE(pyz,
         a.datas,
         a.binaries,
         name='UMATracker-DetectCenter',
-        debug=False,
+        debug=True,
         strip=None,
         upx=False,
-        console=False, icon='./icon/icon.ico')
+        console=True, icon='./icon/icon.ico')
