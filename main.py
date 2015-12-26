@@ -354,7 +354,8 @@ class Ui_MainWindow(QMainWindow, Ui_MainWindowBase):
 
         if 'position' in res[0]:
             max_pos = self.videoPlaybackWidget.getMaxFramePos()
-            if not hasattr(self, 'df') or len(self.df.index)!=max_pos or len(self.df.columns.levels[0])!=len(res):
+            # TODO:FFMS2のインデクシングがキモいので，なにか対策を考えた方がいいかも
+            if not hasattr(self, 'df') or len(self.df.index)!=max_pos+1 or len(self.df.columns.levels[0])!=len(res):
                 col = pd.MultiIndex.from_product([range(len(res)), ['x','y']])
                 self.df = pd.DataFrame(index=range(max_pos+1), columns=col, dtype=np.float64)
 
