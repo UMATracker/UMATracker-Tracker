@@ -1,7 +1,8 @@
 import os
 
 
-datas = [('./data', 'data'),]
+datas = [('./data', 'data'),
+        ('./lib/python/tracking_system', 'lib/python/tracking_system'),]
 
 binaries = [(r'/usr/local/Cellar/ffms2/2.21/lib/libffms2.dylib', 'lib'), ]
 
@@ -9,7 +10,7 @@ a = Analysis(['./main.py'],
             pathex=['./'],
             binaries=binaries,
             datas=datas,
-            hiddenimports=[],
+            hiddenimports=['sklearn', 'numpy', 'numba'],
             hookspath=['./hooks',],
             runtime_hooks=None,
             excludes=None,

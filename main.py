@@ -57,8 +57,6 @@ from PyQt5.QtCore import Qt, QRectF, QPointF
 
 import cv2
 import numpy as np
-import sklearn
-import numba
 import pandas as pd
 
 import filePath
