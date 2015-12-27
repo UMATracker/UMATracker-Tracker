@@ -1,5 +1,6 @@
 import os
 from distutils.sysconfig import get_python_lib
+import platform
 
 datas = [('./data', 'data'),
         ('./lib/python/tracking_system', 'lib/python/tracking_system'),]
@@ -19,7 +20,13 @@ a = Analysis(['./main.py'],
 
 # Additional DLLs
 tmp = []
-for dir_path, dir_names, file_names in os.walk("dll"):
+arch = platform.architecture()[0]
+if arch=='32bit':
+    dll_path = os.path.join('dll', 'x86')
+else:
+    dll_path = os.path.join('dll', 'x64')
+
+for dir_path, dir_names, file_names in os.walk(dll_path):
     for file_name in file_names:
         tmp.append(
                 (

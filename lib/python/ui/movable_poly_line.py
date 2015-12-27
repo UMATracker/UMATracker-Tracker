@@ -65,6 +65,9 @@ class MovablePolyLine(QGraphicsObject):
     def getRadius(self):
         return self.radius
 
+    # TODO:NaNが入ってると劇的に重くなるので，無理矢理NaNをはじいてはいる．
+    #もう少しきれいに書き直すこと．
+    #フレームが前に進むたびに値を詰め直しているためおそいので，その対策も同時に．
     def setPoints(self, ps=None, flags=None):
         if ps is not None and self.points is not None:
             points = [p for p in ps if not np.any(pd.isnull(p))]

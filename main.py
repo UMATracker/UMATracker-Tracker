@@ -303,6 +303,20 @@ class Ui_MainWindow(QMainWindow, Ui_MainWindowBase):
                 rect_item.hide()
         self.videoPlaybackWidget.moveToFrame(0)
 
+        # TODO:この辺evaluateとかぶってるので，後でなんとかすること
+        if hasattr(self, 'trackingPathGroup'):
+            self.inputScene.removeItem(self.trackingPathGroup)
+        self.trackingPathGroup = TrackingPathGroup()
+        self.trackingPathGroup.setRect(self.inputScene.sceneRect())
+        lw = self.trackingPathGroup.autoAdjustLineWidth(self.cv_img.shape)
+        self.lineWidthSpinBox.setValue(lw)
+        r = self.trackingPathGroup.autoAdjustRadius(self.cv_img.shape)
+        self.radiusSpinBox.setValue(r)
+        self.inputScene.addItem(self.trackingPathGroup)
+
+        self.trackingPathGroup.setDataFrame(self.df)
+
+
     def restart_dataframe(self):
         if not hasattr(self, 'df'):
             return

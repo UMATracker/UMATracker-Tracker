@@ -132,7 +132,6 @@ class TrackingPathGroup(QGraphicsObject):
         self.overlayFrameNo = n
         self.setPoints()
 
-    # TODO:フレームジャンプに対応させる
     def setPoints(self, frameNo=None):
         if frameNo is not None:
             self.currentFrameNo = frameNo
