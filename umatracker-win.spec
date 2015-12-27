@@ -75,7 +75,7 @@ exe = EXE(pyz,
         a.datas,
         a.binaries,
         name='UMATracker-DetectCenter',
-        debug=True,
+        debug=False,
         strip=None,
         upx=False,
-        console=True, icon='./icon/icon.ico')
+        console=False, icon='./icon/icon.ico')
