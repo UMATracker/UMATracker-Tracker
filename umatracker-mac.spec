@@ -1,11 +1,12 @@
 import os
-
+import distutils.sysconfig
 
 datas = [('./data', 'data'),
         ('./lib/python/tracking_system', 'lib/python/tracking_system'),]
 
 binaries = [(r'/usr/local/Cellar/ffms2/2.21/lib/libffms2.dylib', 'lib'), ]
 
+site_package_dir = distutils.sysconfig.get_python_lib()
 a = Analysis(['./main.py'],
             pathex=['./'],
             binaries=binaries,
@@ -17,7 +18,7 @@ a = Analysis(['./main.py'],
             win_no_prefer_redirects=None,
             win_private_assemblies=None,
             cipher=None)
-a.binaries += [("llvmlite/binding/libllvmlite.dylib", "/usr/local/Cellar/python3/3.5.0/Frameworks/Python.framework/Versions/3.5/lib/python3.5/site-packages/llvmlite/binding/libllvmlite.dylib", 'BINARY')]
+a.binaries += [("llvmlite/binding/libllvmlite.dylib", os.path.join(site_package_dir, "llvmlite/binding/libllvmlite.dylib"), 'BINARY')]
 
 pyz = PYZ(a.pure, cipher=None)
 
