@@ -44,6 +44,7 @@ if os.name == 'nt':
                     os.path.join(
                         currentDirPath,
                         'dll',
+                        'x64',
                         'VapourSynth',
                         'ffms2.dll'
                         )
