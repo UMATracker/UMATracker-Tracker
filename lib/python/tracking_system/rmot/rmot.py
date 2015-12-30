@@ -5,6 +5,8 @@ import numpy as np
 
 from .hungarian import Hungarian
 
+from sklearn.utils.linear_assignment_ import linear_assignment
+
 def symmetrize(a):
     return a + a.T - np.diag(a.diagonal())
 
@@ -123,10 +125,14 @@ class RMOT:
         self.z = z
         self.M = z.shape[0]
 
-        self.costMtx = np.zeros((self.N, self.M))
+        if self.costMtx is None:
+            self.costMtx = np.zeros((self.N, self.M))
+        else:
+            self.costMtx[:] = 0
 
+        likelihoodMtx = np.full(self.RMN.shape, -1)
         for k in range(self.M):
-            likelihoodMtx = np.full(self.RMN.shape, -1)
+            likelihoodMtx[:] = -1
             func = partial(self.likelihood, z[k])
             likelihoodMtx[self.RMN==1] = np.apply_along_axis(func, 1, self.xCond[self.RMN==1]) * self.relativeWeightMtx[self.RMN==1]
             for i in range(self.N):
@@ -136,13 +142,13 @@ class RMOT:
 
     @jit
     def calcAssignMtx(self):
-        self.hungarian.calculate(self.costMtx)
+        idx = linear_assignment(self.costMtx)
 
-        RC = np.max([self.N, self.M])
-        self.assignMtx = np.zeros((RC, RC))
-        for t in self.hungarian.get_results():
-            self.assignMtx[t] = 1
-        self.assignMtx = self.assignMtx[:self.N,:self.M]
+        if self.assignMtx is None:
+            self.assignMtx = np.zeros((self.N, self.M))
+        else:
+            self.assignMtx[:] = 0
+        self.assignMtx[idx[:, 0], idx[:,1]] = 1
 
     @jit
     def calcObservationMtx(self):
