@@ -5,6 +5,7 @@ dist/
 build/
 *.spec
 !umatracker-mac.spec
+!umatracker-mac-ml.spec
 !umatracker-win.spec
 *.pyc
 Thumbs.db
