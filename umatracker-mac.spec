@@ -20,6 +20,29 @@ a = Analysis(['./main.py'],
             cipher=None)
 a.binaries += [("llvmlite/binding/libllvmlite.dylib", os.path.join(site_package_dir, "llvmlite/binding/libllvmlite.dylib"), 'BINARY')]
 
+tmp = []
+
+lib_path_list = [
+        '/usr/local/Cellar/ffmpeg/',
+        '/usr/local/Cellar/x264/',
+        '/usr/local/Cellar/lame/',
+        '/usr/local/Cellar/libvo-aacenc/'
+        ]
+
+for lib_path in lib_path_list:
+    for dir_path, dir_names, file_names in os.walk(lib_path):
+        for file_name in file_names:
+            full_path = os.path.join(dir_path, file_name)
+            if os.path.splitext(file_name)[1]=='.dylib':
+                tmp.append(
+                        (
+                            file_name,
+                            full_path,
+                            'BINARY'
+                            )
+                        )
+a.binaries += tmp
+
 pyz = PYZ(a.pure, cipher=None)
 
 exe = EXE(pyz,
