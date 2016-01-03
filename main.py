@@ -241,6 +241,9 @@ class Ui_MainWindow(QMainWindow, Ui_MainWindowBase):
             self.filterIO = FilterIO(filePath)
 
             exec(self.filterIO.getFilterCode(), globals())
+
+            self.filter = None
+            self.reset_dataframe()
             self.evaluate()
 
     def saveCSVFile(self, activated=False, filePath = None):

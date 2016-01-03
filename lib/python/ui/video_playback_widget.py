@@ -20,6 +20,15 @@ try:
 except AttributeError:
     _fromUtf8 = lambda s: s
 
+# Log output setting.
+# If handler = StreamHandler(), log will output into StandardOutput.
+from logging import getLogger, NullHandler, StreamHandler, DEBUG
+logger = getLogger(__name__)
+handler = NullHandler()
+handler.setLevel(DEBUG)
+logger.setLevel(DEBUG)
+logger.addHandler(handler)
+
 import os
 
 if getattr(sys, 'frozen', False):
@@ -29,7 +38,7 @@ elif __file__:
 
 vs_core = vs.get_core()
 
-print(os.name)
+logger.debug('OS Name: {0}'.format(os.name))
 if os.name == 'nt':
     try:
         if getattr(sys, 'frozen', False):
@@ -52,7 +61,7 @@ if os.name == 'nt':
     except vs.Error:
         pass
 elif os.name == 'posix':  # FIXME:Linuxだと落ちる．
-    print("Mac!")
+    logger.debug("OS is MacOS")
     for libfile in [os.path.join(currentDirPath, 'lib', 'libffms2.dylib'),
                     r'/usr/local/Cellar/ffms2/2.21/lib/libffms2.dylib']:
         if os.path.isfile(libfile):
@@ -124,9 +133,13 @@ class VideoPlaybackWidget(QtWidgets.QWidget, Ui_VideoPlaybackWidget):
         if filename is not None:
             try:
                 self.ret = vs_core.ffms2.Source(source=filename)
-                print(self.ret.format)
+
+                # FIXME:Windows版のみ，一部のビデオでリストが返される．
+                if isinstance(self.ret, list):
+                    self.ret = self.ret[0]
+
                 self.ret = vs_core.resize.Lanczos(self.ret, format=vs.RGB24)
-                print(self.ret.format)
+                logger.debug(self.ret.format)
             except vs.Error:
                 return False
 
@@ -250,7 +263,7 @@ class VideoPlaybackWidget(QtWidgets.QWidget, Ui_VideoPlaybackWidget):
             return -1
 
     def setFrame(self, frame, frameNo):
-        print(frameNo)
+        logger.debug('Frame No: {0}'.format(frameNo))
         self.frameChanged.emit(frame, frameNo)
 
     @pyqtSlot()
@@ -291,14 +304,14 @@ class VideoPlaybackWidget(QtWidgets.QWidget, Ui_VideoPlaybackWidget):
 
     @pyqtSlot(int)
     def playbackSliderActionTriggered(self, value):
-        print('Slider val: {0}'.format(self.playbackSlider.value()))
+        logger.debug('Slider val: {0}'.format(self.playbackSlider.value()))
         if self.isPlaying():
             self.stop()
 
     @pyqtSlot(int)
     def playbackSliderValueChanged(self, value):
         currentValue = self.playbackSlider.value()
-        print('Slider val: {0}, {1}'.format(currentValue, value))
+        logger.debug('Slider val: {0}, {1}'.format(currentValue, value))
 
         if self.isOpened():
             self.moveToFrame(currentValue, False)
