@@ -51,7 +51,7 @@ exe = EXE(pyz,
         a.zipfiles,
         a.datas,
         a.binaries,
-        name='UMATracker-DetectCenter',
+        name='UMATracker-Tracking',
         debug=False,
         strip=None,
         upx=True,
@@ -66,7 +66,7 @@ coll = COLLECT(exe,
         name=os.path.join('dist', 'UMATracker'))
 
 app = BUNDLE(coll,
-        name=os.path.join('dist', 'UMATracker-DetectCenter.app'),
-        appname="UMATracker-DetectCenter",
+        name=os.path.join('dist', 'UMATracker-Tracking.app'),
+        appname="UMATracker-Tracking",
         version = '0.1', icon='./icon/icon.icns'
         )
