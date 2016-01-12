@@ -45,7 +45,7 @@ def get_modules(root):
         else:
             yield root + [name]
 
-# TODO:パッケージ化したときにどういう挙動をするか要チェック
+# TODO:パッケージ化したときにどういう挙動をするか要チェック(上手く動いている模様)
 sys.path.append(currentDirPath)
 tracking_system_path = ['lib', 'python', 'tracking_system']
 gen_init_py(tracking_system_path)
@@ -171,7 +171,6 @@ class Ui_MainWindow(QMainWindow, Ui_MainWindowBase):
 
     def setFrame(self, frame, frameNo):
         if frame is not None:
-            print('set')
             self.cv_img = frame
             self.currentFrameNo = frameNo
             self.updateInputGraphicsView()
@@ -311,13 +310,16 @@ class Ui_MainWindow(QMainWindow, Ui_MainWindowBase):
         self.inputGraphicsView.fitInView(self.inputScene.sceneRect(), QtCore.Qt.KeepAspectRatio)
 
     def updatePath(self):
-        self.trackingPathGroup.setPoints(self.currentFrameNo)
-        if 'arrow' in self.stackedWidget.currentWidget().get_attributes():
+        attrs = self.stackedWidget.currentWidget().get_attributes()
+
+        if 'position' in attrs:
+            self.trackingPathGroup.setPoints(self.currentFrameNo)
+
+        if 'arrow' in attrs:
             for i, arrow_item in enumerate(self.arrow_items):
                 begin = self.df.loc[self.currentFrameNo, (i, 'position')].as_matrix()
                 end = self.df.loc[self.currentFrameNo, (i, 'arrow')].as_matrix()
                 arrow_item.setPosition(begin, end)
-
 
     def resetDataframe(self):
         self.initializeTrackingSystem()
@@ -366,32 +368,34 @@ class Ui_MainWindow(QMainWindow, Ui_MainWindowBase):
 
         if self.trackingPathGroup is not None:
             self.inputScene.removeItem(self.trackingPathGroup)
-        self.trackingPathGroup = TrackingPathGroup()
-        self.trackingPathGroup.setRect(self.inputScene.sceneRect())
-        if self.pathCheckBox.checkState()==Qt.Unchecked:
-            self.trackingPathGroup.hide()
 
-        self.inputScene.addItem(self.trackingPathGroup)
-        self.trackingPathGroup.setDataFrame(self.df)
+        if self.rect_items is not None:
+            [self.inputScene.removeItem(item) for item in self.rect_items]
 
-        lw = self.trackingPathGroup.autoAdjustLineWidth(self.cv_img.shape)
-        r = self.trackingPathGroup.autoAdjustRadius(self.cv_img.shape)
-        self.lineWidthSpinBox.setValue(lw)
-        self.radiusSpinBox.setValue(r)
+        if self.arrow_items is not None:
+            [self.inputScene.removeItem(item) for item in self.arrow_items]
+
+        if 'position' in attrs:
+            self.trackingPathGroup = TrackingPathGroup()
+            self.trackingPathGroup.setRect(self.inputScene.sceneRect())
+            if self.pathCheckBox.checkState()==Qt.Unchecked:
+                self.trackingPathGroup.hide()
+
+            self.inputScene.addItem(self.trackingPathGroup)
+            self.trackingPathGroup.setDataFrame(self.df)
+
+            lw = self.trackingPathGroup.autoAdjustLineWidth(self.cv_img.shape)
+            r = self.trackingPathGroup.autoAdjustRadius(self.cv_img.shape)
+            self.lineWidthSpinBox.setValue(lw)
+            self.radiusSpinBox.setValue(r)
 
         if 'rect' in attrs:
-            if self.rect_items is not None:
-                [self.inputScene.removeItem(item) for item in self.rect_items]
-
             self.rect_items = [QGraphicsRectItem() for i in range(tracking_n)]
             for rect_item in self.rect_items:
                 rect_item.setZValue(1000)
                 self.inputScene.addItem(rect_item)
 
         if 'arrow' in attrs:
-            if self.arrow_items is not None:
-                [self.inputScene.removeItem(item) for item in self.arrow_items]
-
             self.arrow_items = [MovableArrow() for i in range(tracking_n)]
             for arrow_item in self.arrow_items:
                 arrow_item.setZValue(900)
