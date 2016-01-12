@@ -22,7 +22,7 @@ class TrackingPathGroup(QGraphicsObject):
 
         self.num_items = 0
         self.currentFrameNo = 0
-        self.overlayFrameNo = 1
+        self.overlayFrameNo = 0
         self.radius = 2.0
         self.lineWidth = 5
 
@@ -135,7 +135,6 @@ class TrackingPathGroup(QGraphicsObject):
 
         for i, item in enumerate(self.itemList):
             array = self.df.loc[min_value:max_value, (i,'position')].as_matrix()
-            print(array)
             flags = np.full(len(array), False, dtype=np.bool)
             if self.drawItemFlag and pos < len(array):
                 flags[pos] = True

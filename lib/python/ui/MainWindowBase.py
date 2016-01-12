@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Form implementation generated from reading ui file './MainWindowBase.ui'
+# Form implementation generated from reading ui file '.\MainWindowBase.ui'
 #
 # Created by: PyQt5 UI code generator 5.5.1
 #
@@ -103,8 +103,9 @@ class Ui_MainWindowBase(object):
         self.label_3.setObjectName("label_3")
         self.horizontalLayout_4.addWidget(self.label_3)
         self.overlayFrameNoSpinBox = QtWidgets.QSpinBox(self.groupBox)
-        self.overlayFrameNoSpinBox.setMinimum(1)
+        self.overlayFrameNoSpinBox.setMinimum(0)
         self.overlayFrameNoSpinBox.setMaximum(9999)
+        self.overlayFrameNoSpinBox.setProperty("value", 0)
         self.overlayFrameNoSpinBox.setObjectName("overlayFrameNoSpinBox")
         self.horizontalLayout_4.addWidget(self.overlayFrameNoSpinBox)
         self.verticalLayout.addLayout(self.horizontalLayout_4)
@@ -112,7 +113,7 @@ class Ui_MainWindowBase(object):
         self.gridLayout.addWidget(self.gridWidget, 1, 0, 1, 1)
         MainWindowBase.setCentralWidget(self.centralwidget)
         self.menubar = QtWidgets.QMenuBar(MainWindowBase)
-        self.menubar.setGeometry(QtCore.QRect(0, 0, 1060, 22))
+        self.menubar.setGeometry(QtCore.QRect(0, 0, 1060, 24))
         self.menubar.setObjectName("menubar")
         self.menuFiles = QtWidgets.QMenu(self.menubar)
         self.menuFiles.setObjectName("menuFiles")
