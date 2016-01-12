@@ -102,6 +102,7 @@ class VideoPlaybackWidget(QtWidgets.QWidget, Ui_VideoPlaybackWidget):
 
         self.currentFrameNo = -1
         self.ret = None
+        self.currentFrame = None
 
         self.playbackTimer = QtCore.QTimer()
         self.playbackTimer.timeout.connect(self.videoPlayback)
@@ -164,7 +165,7 @@ class VideoPlaybackWidget(QtWidgets.QWidget, Ui_VideoPlaybackWidget):
             ret, frame = self.readFrame(0)
             if ret:
                 self.currentFrameNo = 0
-                self.frameChanged.emit(frame, 0)
+                self.setFrame(frame, 0)
                 return True
             else:
                 return False
@@ -262,8 +263,12 @@ class VideoPlaybackWidget(QtWidgets.QWidget, Ui_VideoPlaybackWidget):
         else:
             return -1
 
+    def getCurrentFrame(self):
+        return self.currentFrame
+
     def setFrame(self, frame, frameNo):
         logger.debug('Frame No: {0}'.format(frameNo))
+        self.currentFrame = frame
         self.frameChanged.emit(frame, frameNo)
 
     @pyqtSlot()

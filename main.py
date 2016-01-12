@@ -103,8 +103,19 @@ class Ui_MainWindow(QMainWindow, Ui_MainWindowBase):
         self.overlayFrameNoSpinBox.valueChanged.connect(self.overlayFrameNoSpinBoxValueChanged)
         self.stackedWidget.currentChanged.connect(self.stackedWidgetCurrentChanged)
 
+        self.arrowCheckBox.stateChanged.connect(self.arrowCheckBoxStateChanged)
+        self.pathCheckBox.stateChanged.connect(self.pathCheckBoxStateChanged)
+
         self.filter = None
         self.filterIO = None
+        self.isInitialized = False
+        self.rect_items = None
+        self.trackingPathGroup = None
+        self.df = None
+        self.inputPixmapItem = None
+        self.cv_img = None
+        self.arrow_items = None
+        self.filePath = None
 
     def dragEnterEvent(self,event):
         event.acceptProposedAction()
@@ -128,10 +139,27 @@ class Ui_MainWindow(QMainWindow, Ui_MainWindowBase):
             # Read Filter
             self.openFilterFile(filePath=filePath)
             return
-        elif self.openImageFile(filePath=filePath):
-            return
         elif self.openVideoFile(filePath=filePath):
             return
+
+    def arrowCheckBoxStateChanged(self, state):
+        if self.arrow_items is None:
+            return
+
+        for arrow_item in self.arrow_items:
+            if state==Qt.Unchecked:
+                arrow_item.hide()
+            if state==Qt.Checked:
+                arrow_item.show()
+
+    def pathCheckBoxStateChanged(self, state):
+        if self.trackingPathGroup is None:
+            return
+
+        if state==Qt.Unchecked:
+            self.trackingPathGroup.hide()
+        if state==Qt.Checked:
+            self.trackingPathGroup.show()
 
     def reset(self):
         self.videoPlaybackWidget.stop()
@@ -157,7 +185,6 @@ class Ui_MainWindow(QMainWindow, Ui_MainWindowBase):
 
     def menuInit(self):
         self.actionOpenVideo.triggered.connect(self.openVideoFile)
-        self.actionOpenImage.triggered.connect(self.openImageFile)
         self.actionOpenFilterSetting.triggered.connect(self.openFilterFile)
 
         self.actionSaveCSVFile.triggered.connect(self.saveCSVFile)
@@ -176,8 +203,8 @@ class Ui_MainWindow(QMainWindow, Ui_MainWindowBase):
                 continue
 
             widget = class_def(self.stackedWidget)
-            widget.reset.connect(self.reset_dataframe)
-            widget.restart.connect(self.restart_dataframe)
+            widget.reset.connect(self.resetDataframe)
+            widget.restart.connect(self.restartDataframe)
             self.stackedWidget.addWidget(widget)
 
             action = self.menuAlgorithms.addAction(widget.get_name())
@@ -198,33 +225,15 @@ class Ui_MainWindow(QMainWindow, Ui_MainWindowBase):
 
         if len(filePath) is not 0:
             self.filePath = filePath
-
             ret = self.videoPlaybackWidget.openVideo(filePath)
-            if ret == False:
+            if not ret:
                 return False
 
             self.videoPlaybackWidget.show()
-            self.evaluate()
 
-            return True
-        else:
-            return False
-
-
-    def openImageFile(self, activated=False, filePath = None):
-        if filePath == None:
-            filePath, _ = QFileDialog.getOpenFileName(None, 'Open Image File', userDir)
-
-        if len(filePath) is not 0:
-            self.filePath = filePath
-            img = cv2.imread(filePath)
-            if img is None:
-                return False
-
-            self.cv_img = img
-            self.videoPlaybackWidget.hide()
-            self.updateInputGraphicsView()
-
+            self.cv_img = self.videoPlaybackWidget.getCurrentFrame()
+            self.currentFrameNo = 0
+            self.initializeTrackingSystem()
             self.evaluate()
 
             return True
@@ -243,40 +252,48 @@ class Ui_MainWindow(QMainWindow, Ui_MainWindowBase):
             exec(self.filterIO.getFilterCode(), globals())
 
             self.filter = None
-            self.reset_dataframe()
+
+            self.initializeTrackingSystem()
             self.evaluate()
 
     def saveCSVFile(self, activated=False, filePath = None):
-        if hasattr(self, 'df'):
-            filePath, _ = QFileDialog.getSaveFileName(None, 'Save CSV File', userDir, "CSV files (*.csv)")
+        if self.df is not None:
+            dirctory = os.path.dirname(self.filePath)
+            base_name = os.path.splitext(os.path.basename(self.filePath))[0]
 
-            if len(filePath) is not 0:
-                logger.debug("Saving CSV file: {0}".format(filePath))
+            levels = self.df.columns.levels
+            for attr in levels[1]:
+                path = os.path.join(dirctory, '{0}-{1}.csv'.format(base_name, attr))
+                filePath, _ = QFileDialog.getSaveFileName(None, 'Save CSV File', path, "CSV files (*.csv)")
 
-                df = self.df[pd.notnull(self.df).any(axis=1)].copy()
-                columns = ['x{0},y{0}'.format(i).split(',') for i in range(int(len(df.columns)/2))]
-                df.columns = list(chain.from_iterable(columns))
-                df.to_csv(filePath)
+                if len(filePath) is not 0:
+                    logger.debug("Saving CSV file: {0}".format(filePath))
+
+                    df = self.df[pd.notnull(self.df).any(axis=1)].loc[:,(slice(None),attr)]
+                    col = ['{0}{1}'.format(l,i) for i in levels[0] for l in levels[2]]
+                    df.columns = col
+
+                    df.to_csv(filePath)
 
     def radiusSpinBoxValueChanged(self, i):
-        if hasattr(self, 'trackingPathGroup'):
+        if self.trackingPathGroup is not None:
             self.trackingPathGroup.setRadius(i)
 
     def lineWidthSpinBoxValueChanged(self, i):
-        if hasattr(self, 'trackingPathGroup'):
+        if self.trackingPathGroup is not None:
             self.trackingPathGroup.setLineWidth(i)
 
     def overlayFrameNoSpinBoxValueChanged(self, i):
-        if hasattr(self, 'trackingPathGroup'):
+        if self.trackingPathGroup is not None:
             self.trackingPathGroup.setOverlayFrameNo(i)
 
     def stackedWidgetCurrentChanged(self, i):
         print('current changed: {0}'.format(i))
         self.stackedWidget.currentWidget().estimator_init()
-        self.reset_dataframe()
+        self.resetDataframe()
 
     def updateInputGraphicsView(self):
-        if hasattr(self, 'inputPixmapItem'):
+        if self.inputPixmapItem is not None:
             self.inputScene.removeItem(self.inputPixmapItem)
 
         qimg = misc.cvMatToQImage(self.cv_img)
@@ -295,100 +312,108 @@ class Ui_MainWindow(QMainWindow, Ui_MainWindowBase):
 
     def updatePath(self):
         self.trackingPathGroup.setPoints(self.currentFrameNo)
+        if 'arrow' in self.stackedWidget.currentWidget().get_attributes():
+            for i, arrow_item in enumerate(self.arrow_items):
+                begin = self.df.loc[self.currentFrameNo, (i, 'position')].as_matrix()
+                end = self.df.loc[self.currentFrameNo, (i, 'arrow')].as_matrix()
+                arrow_item.setPosition(begin, end)
 
-    def reset_dataframe(self):
-        if not hasattr(self, 'df'):
-            return
 
-        self.df[:] = np.nan
-        if hasattr(self, 'rect_items'):
-            for rect_item in self.rect_items:
-                rect_item.hide()
+    def resetDataframe(self):
+        self.initializeTrackingSystem()
         self.videoPlaybackWidget.moveToFrame(0)
 
-        # TODO:この辺evaluateとかぶってるので，後でなんとかすること
-        if hasattr(self, 'trackingPathGroup'):
-            self.inputScene.removeItem(self.trackingPathGroup)
-        self.trackingPathGroup = TrackingPathGroup()
-        self.trackingPathGroup.setRect(self.inputScene.sceneRect())
-        lw = self.trackingPathGroup.autoAdjustLineWidth(self.cv_img.shape)
-        self.lineWidthSpinBox.setValue(lw)
-        r = self.trackingPathGroup.autoAdjustRadius(self.cv_img.shape)
-        self.radiusSpinBox.setValue(r)
-        self.inputScene.addItem(self.trackingPathGroup)
-
-        self.trackingPathGroup.setDataFrame(self.df)
-
-
-    def restart_dataframe(self):
-        if not hasattr(self, 'df'):
+    def restartDataframe(self):
+        if self.df is None:
             return
 
         self.df.loc[self.currentFrameNo+1:] = np.nan
         widget = self.stackedWidget.currentWidget()
-        array = self.df.loc[self.currentFrameNo].as_matrix()
-        widget.reset_estimator(array.reshape((array.shape[0]/2, 2)))
+
+        df = self.df.loc[self.currentFrameNo]
+        mul_levs = df.index.levels
+
+        kv = {k:[] for k in mul_levs[1]}
+        for i in mul_levs[0]:
+            for key, value in kv.items():
+                value.append(df[i][key].as_matrix())
+        for key, value in kv.items():
+            kv[key] = np.array(value)
+        widget.reset_estimator(kv)
+
+    def initializeTrackingSystem(self):
+        if  not (self.videoPlaybackWidget.isOpened() and 'filterOperation' in globals()):
+            return False
+
+        self.filter = filterOperation(self.cv_img)
+        self.filter.fgbg = self.filterIO.getBackgroundImg()
+        self.filter.isInit = True
+
+        tracking_n = self.stackedWidget.currentWidget().get_tracking_n()
+        attrs = self.stackedWidget.currentWidget().get_attributes()
+        max_frame_pos = self.videoPlaybackWidget.getMaxFramePos()
+
+        col = pd.MultiIndex.from_product([range(tracking_n), [k for k in attrs if attrs[k]], ['x', 'y']])
+        self.df = pd.DataFrame(index=range(max_frame_pos+1), columns=col, dtype=np.float64).sort_index().sort_index(axis=1)
+
+        if self.trackingPathGroup is not None:
+            self.inputScene.removeItem(self.trackingPathGroup)
+        self.trackingPathGroup = TrackingPathGroup()
+        self.trackingPathGroup.setRect(self.inputScene.sceneRect())
+        if self.pathCheckBox.checkState()==Qt.Unchecked:
+            self.trackingPathGroup.hide()
+
+        self.inputScene.addItem(self.trackingPathGroup)
+        self.trackingPathGroup.setDataFrame(self.df)
+
+        lw = self.trackingPathGroup.autoAdjustLineWidth(self.cv_img.shape)
+        r = self.trackingPathGroup.autoAdjustRadius(self.cv_img.shape)
+        self.lineWidthSpinBox.setValue(lw)
+        self.radiusSpinBox.setValue(r)
+
+        if 'rect' in attrs:
+            if self.rect_items is not None:
+                [self.inputScene.removeItem(item) for item in self.rect_items]
+
+            self.rect_items = [QGraphicsRectItem() for i in range(tracking_n)]
+            for rect_item in self.rect_items:
+                rect_item.setZValue(1000)
+                self.inputScene.addItem(rect_item)
+
+        if 'arrow' in attrs:
+            if self.arrow_items is not None:
+                [self.inputScene.removeItem(item) for item in self.arrow_items]
+
+            self.arrow_items = [MovableArrow() for i in range(tracking_n)]
+            for arrow_item in self.arrow_items:
+                arrow_item.setZValue(900)
+                if self.arrowCheckBox.checkState()==Qt.Unchecked:
+                    arrow_item.hide()
+                self.inputScene.addItem(arrow_item)
+
+        self.isInitialized = True
 
     def evaluate(self, update=True):
-        print('eval')
-        if hasattr(self, 'df') and np.all(pd.notnull(self.df.loc[self.currentFrameNo])):
-            self.updatePath()
-            if hasattr(self, 'rect_items'):
-                for rect_item in self.rect_items:
-                    rect_item.hide()
+        if not self.isInitialized:
             return
 
-        # TODO:簡略化すること
-        try:
-            if self.filter is None:
-                if 'filterOperation' in globals():
-                    self.filter = filterOperation(self.cv_img)
-                    self.filter.fgbg = self.filterIO.getBackgroundImg()
-                    self.filter.isInit = True
-                else:
-                    return
-            else:
-                pass
-        except AttributeError:
+        if self.df is not None and np.all(pd.notnull(self.df.loc[self.currentFrameNo])):
+            self.updatePath()
+            if self.rect_items is not None:
+                for rect_item in self.rect_items:
+                    rect_item.hide()
             return
 
         img = self.filter.filterFunc(self.cv_img.copy())
         res = self.stackedWidget.currentWidget().track(self.cv_img.copy(), img)
 
-        if 'rect' in res[0]:
-            if not hasattr(self, 'rect_items') or len(self.rect_items)!=len(res):
-                if hasattr(self, 'rect_items'):
-                    [self.inputScene.removeItem(item) for item in self.rect_items]
-
-                self.rect_items = [QGraphicsRectItem() for i in range(len(res))]
-                for rect_item in self.rect_items:
-                    rect_item.setZValue(1000)
-                    self.inputScene.addItem(rect_item)
-
-            for rect_item, res_item in zip(self.rect_items, res):
-                rect = res_item['rect']
-                rect_item.setRect(QRectF(QPointF(*rect['topLeft']), QPointF(*rect['bottomRight'])))
-
         if 'position' in res[0]:
-            max_pos = self.videoPlaybackWidget.getMaxFramePos()
-            # TODO:FFMS2のインデクシングがキモいので，なにか対策を考えた方がいいかも
-            if not hasattr(self, 'df') or len(self.df.index)!=max_pos+1 or len(self.df.columns.levels[0])!=len(res):
-                col = pd.MultiIndex.from_product([range(len(res)), ['x','y']])
-                self.df = pd.DataFrame(index=range(max_pos+1), columns=col, dtype=np.float64)
-
-                if hasattr(self, 'trackingPathGroup'):
-                    self.inputScene.removeItem(self.trackingPathGroup)
-                self.trackingPathGroup = TrackingPathGroup()
-                self.trackingPathGroup.setRect(self.inputScene.sceneRect())
-                lw = self.trackingPathGroup.autoAdjustLineWidth(self.cv_img.shape)
-                self.lineWidthSpinBox.setValue(lw)
-                r = self.trackingPathGroup.autoAdjustRadius(self.cv_img.shape)
-                self.radiusSpinBox.setValue(r)
-                self.inputScene.addItem(self.trackingPathGroup)
-
-                self.trackingPathGroup.setDataFrame(self.df)
             for i, dic in enumerate(res):
-                self.df.loc[self.currentFrameNo, i] = dic['position']
+                self.df.loc[self.currentFrameNo, (i, 'position')] = dic['position']
+        if 'arrow' in res[0]:
+            for i, dic in enumerate(res):
+                self.df.loc[self.currentFrameNo, (i, 'arrow')] = dic['arrow']
+        print(self.df.loc[self.currentFrameNo])
 
         if update:
             if 'rect' in res[0]:

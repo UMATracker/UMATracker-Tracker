@@ -34,7 +34,11 @@ class Widget(Ui_RMOT_widget, QtWidgets.QWidget):
         self.rmot = None
         self.k_means = None
 
-    def reset_estimator(self, center_pos):
+    def reset_estimator(self, kv):
+        center_pos = kv['position']
+        self.set_new_estimator(center_pos)
+
+    def set_new_estimator(self, center_pos):
         windows = np.zeros(center_pos.shape)
         windows[:] = self.windowHeightSpinBox.value()
         windows[:,0] = self.windowWidthSpinBox.value()
@@ -48,6 +52,12 @@ class Widget(Ui_RMOT_widget, QtWidgets.QWidget):
 
     def get_name(self):
         return 'RMOT'
+
+    def get_tracking_n(self):
+        return self.nObjectsSpinBox.value()
+
+    def get_attributes(self):
+        return {'position':True, 'rect':False}
 
     def track(self, original_img, filtered_img):
         n_objects = self.nObjectsSpinBox.value()
@@ -66,7 +76,7 @@ class Widget(Ui_RMOT_widget, QtWidgets.QWidget):
         windows[:,0] = self.windowWidthSpinBox.value()
 
         if self.rmot is None:
-            self.reset_estimator(center_pos)
+            self.set_new_estimator(center_pos)
             res = center_pos
         else:
             try:

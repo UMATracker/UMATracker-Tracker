@@ -21,16 +21,20 @@ class MovableArrow(QGraphicsLineItem):
         self.end =np.array([10.0, 10.0])
 
         self.myColor = Qt.black
-        self.setPen(QPen(self.myColor, 10))
-        self.arrowSize = 15
+        self.setPen(QPen(self.myColor, 5))
+        self.arrowSize = 7
         self.setOpacity(0.5)
 
         self.isMousePressed = False
         self.setFlags(QGraphicsItem.ItemIsSelectable |
                       QGraphicsItem.ItemIsFocusable |
                       QGraphicsItem.ItemIsMovable |
-                      QGraphicsItem.ItemSendsGeometryChanges)
+                      QGraphicsItem.ItemSendsGeometryChanges
+                      )
 
+    def setPosition(self, begin, end):
+        self.begin = begin
+        self.end = end
 
     def boundingRect(self):
         extra = (self.pen().width() + 20) / 2.0

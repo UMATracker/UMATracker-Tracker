@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Form implementation generated from reading ui file '.\MainWindowBase.ui'
+# Form implementation generated from reading ui file './MainWindowBase.ui'
 #
 # Created by: PyQt5 UI code generator 5.5.1
 #
@@ -64,6 +64,17 @@ class Ui_MainWindowBase(object):
         self.stackedWidget = QtWidgets.QStackedWidget(self.groupBox)
         self.stackedWidget.setObjectName("stackedWidget")
         self.verticalLayout.addWidget(self.stackedWidget)
+        self.horizontalLayout_5 = QtWidgets.QHBoxLayout()
+        self.horizontalLayout_5.setObjectName("horizontalLayout_5")
+        self.arrowCheckBox = QtWidgets.QCheckBox(self.groupBox)
+        self.arrowCheckBox.setChecked(True)
+        self.arrowCheckBox.setObjectName("arrowCheckBox")
+        self.horizontalLayout_5.addWidget(self.arrowCheckBox)
+        self.pathCheckBox = QtWidgets.QCheckBox(self.groupBox)
+        self.pathCheckBox.setChecked(True)
+        self.pathCheckBox.setObjectName("pathCheckBox")
+        self.horizontalLayout_5.addWidget(self.pathCheckBox)
+        self.verticalLayout.addLayout(self.horizontalLayout_5)
         self.horizontalLayout_2 = QtWidgets.QHBoxLayout()
         self.horizontalLayout_2.setObjectName("horizontalLayout_2")
         self.label = QtWidgets.QLabel(self.groupBox)
@@ -101,7 +112,7 @@ class Ui_MainWindowBase(object):
         self.gridLayout.addWidget(self.gridWidget, 1, 0, 1, 1)
         MainWindowBase.setCentralWidget(self.centralwidget)
         self.menubar = QtWidgets.QMenuBar(MainWindowBase)
-        self.menubar.setGeometry(QtCore.QRect(0, 0, 1060, 24))
+        self.menubar.setGeometry(QtCore.QRect(0, 0, 1060, 22))
         self.menubar.setObjectName("menubar")
         self.menuFiles = QtWidgets.QMenu(self.menubar)
         self.menuFiles.setObjectName("menuFiles")
@@ -149,6 +160,8 @@ class Ui_MainWindowBase(object):
         MainWindowBase.setWindowTitle(_translate("MainWindowBase", "MainWindow"))
         self.graphicsBox.setTitle(_translate("MainWindowBase", "Object Tracking"))
         self.groupBox.setTitle(_translate("MainWindowBase", "Settings"))
+        self.arrowCheckBox.setText(_translate("MainWindowBase", "Arrow"))
+        self.pathCheckBox.setText(_translate("MainWindowBase", "Path"))
         self.label.setText(_translate("MainWindowBase", "Radius"))
         self.label_2.setText(_translate("MainWindowBase", "Line Width"))
         self.label_3.setText(_translate("MainWindowBase", "# of overlay"))

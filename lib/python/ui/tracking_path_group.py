@@ -28,13 +28,7 @@ class TrackingPathGroup(QGraphicsObject):
 
     def setDataFrame(self, df):
         self.df = df
-        shape = self.df.shape
-
-        self.num_items = int(shape[1]/2)
-        index = (np.repeat(range(self.num_items), 2).tolist(), [0,1]*self.num_items)
-        self.df.columns = pd.MultiIndex.from_tuples(tuple(zip(*index)))
-
-        self.colors = np.random.randint(0, 255, (shape[1]/2, 3)).tolist()
+        self.colors = np.random.randint(0, 255, (len(self.df.columns.levels[0]), 3)).tolist()
 
         scene = self.scene()
         if scene is not None:
@@ -81,8 +75,8 @@ class TrackingPathGroup(QGraphicsObject):
 
     def swap(self):
         pos0, pos1 = [self.itemList.index(item) for item in self.selectedItemList]
-        array0 = self.df.loc[self.currentFrameNo:, pos0].as_matrix()
-        array1 = self.df.loc[self.currentFrameNo:, pos1].as_matrix()
+        array0 = self.df.loc[self.currentFrameNo:, (pos0,'position')].as_matrix()
+        array1 = self.df.loc[self.currentFrameNo:, (pos1,'position')].as_matrix()
 
         tmp = array0.copy()
         array0[:, :] = array1
@@ -140,7 +134,8 @@ class TrackingPathGroup(QGraphicsObject):
         pos = self.currentFrameNo - min_value
 
         for i, item in enumerate(self.itemList):
-            array = self.df.loc[min_value:max_value, i].as_matrix()
+            array = self.df.loc[min_value:max_value, (i,'position')].as_matrix()
+            print(array)
             flags = np.full(len(array), False, dtype=np.bool)
             if self.drawItemFlag and pos < len(array):
                 flags[pos] = True

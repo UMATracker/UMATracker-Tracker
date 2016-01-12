@@ -33,12 +33,18 @@ class Widget(Ui_group_tracker_widget, QtWidgets.QWidget):
     def estimator_init(self):
         self.gmm = None
 
-    def reset_estimator(self, points):
+    def reset_estimator(self, kv):
         if self.gmm is not None:
-            self.gmm.means_ = points
+            self.gmm.means_ = kv['position']
 
     def get_name(self):
         return 'Group Tracker GMM'
+
+    def get_tracking_n(self):
+        return self.nObjectsSpinBox.value()
+
+    def get_attributes(self):
+        return {'position':True, }
 
     def track(self, original_img, filtered_img):
         n_objects = self.nObjectsSpinBox.value()
