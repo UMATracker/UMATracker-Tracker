@@ -26,7 +26,7 @@ def gen_init_py(root):
 
     for dirname, dirs, fnames in os.walk(root):
         if '__pycache__' in dirname:
-            return
+            continue
 
         fnames = [
                 os.path.splitext(fname)[0] for fname in fnames
