@@ -30,6 +30,12 @@ class Widget(Ui_group_tracker_widget, QtWidgets.QWidget):
         self.restartButton.pressed.connect(self.restart_button_pressed)
         self.nObjectsSpinBox.valueChanged.connect(self.n_objects_spinbox_value_changed)
 
+        self.likelihoodDiffThresholdSpinBox.valueChanged.connect(self.likelihoodDiffThresholdSpinBoxValueChanged)
+
+    def likelihoodDiffThresholdSpinBoxValueChanged(self, val):
+        if self.gmm is not None:
+            self.gmm.set_likelihood_diff_threshold(val)
+
     def estimator_init(self):
         self.gmm = None
         self.pca = None
@@ -57,6 +63,7 @@ class Widget(Ui_group_tracker_widget, QtWidgets.QWidget):
 
         if self.gmm is None:
             self.gmm = GroupTrackerGMM(n_components=n_objects, covariance_type='full', n_iter=2000)
+            self.gmm.set_likelihood_diff_threshold(self.likelihoodDiffThresholdSpinBox.value())
 
         self.gmm._fit(non_zero_pos, n_k_means=n_k_means)
         res = self.gmm.means_
@@ -69,7 +76,10 @@ class Widget(Ui_group_tracker_widget, QtWidgets.QWidget):
             self.dirs = [None for i in range(self.gmm.n_components)]
         for i in range(self.gmm.n_components):
             ps = non_zero_pos[labels==i]
-            self.pca.fit_transform(ps)
+            try:
+                self.pca.fit_transform(ps)
+            except:
+                continue
             axes = self.pca.components_
             ratios = self.pca.explained_variance_ratio_
             axes = ratios.reshape(ratios.shape+(1,)) * axes
