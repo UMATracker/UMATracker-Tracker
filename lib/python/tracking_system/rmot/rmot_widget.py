@@ -57,7 +57,7 @@ class Widget(Ui_RMOT_widget, QtWidgets.QWidget):
         return self.nObjectsSpinBox.value()
 
     def get_attributes(self):
-        return {'position':True, 'rect':False}
+        return {'position':('x', 'y'), 'rect':False}
 
     def track(self, original_img, filtered_img):
         n_objects = self.nObjectsSpinBox.value()
@@ -85,9 +85,16 @@ class Widget(Ui_RMOT_widget, QtWidgets.QWidget):
             except Warning:
                 pass
 
-        out = []
-        for p, w in zip(res, windows):
-            out.append({'position': p, 'rect': {'topLeft': p-w/2., 'bottomRight': p+w/2.}})
+        out = {
+                'position': res,
+                'rect': [
+                    {
+                        'topLeft': p-w/2.,
+                        'bottomRight': p+w/2.
+                        }
+                    for p, w in zip(res, windows)
+                    ]
+                }
 
         return out
 

@@ -50,7 +50,7 @@ class Widget(Ui_group_tracker_widget, QtWidgets.QWidget):
         return self.nObjectsSpinBox.value()
 
     def get_attributes(self):
-        return {'position':True, }
+        return {'position':('x', 'y'),}
 
     def track(self, original_img, filtered_img):
         n_objects = self.nObjectsSpinBox.value()
@@ -63,13 +63,8 @@ class Widget(Ui_group_tracker_widget, QtWidgets.QWidget):
             self.gmm.set_likelihood_diff_threshold(self.likelihoodDiffThresholdSpinBox.value())
 
         self.gmm._fit(non_zero_pos, n_k_means=n_k_means)
-        res = self.gmm.means_
 
-        out = []
-        for p in res:
-            out.append({'position': p})
-
-        return out
+        return {'position': self.gmm.means_,}
 
     @pyqtSlot()
     def reset_button_pressed(self):

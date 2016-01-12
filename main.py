@@ -353,7 +353,15 @@ class Ui_MainWindow(QMainWindow, Ui_MainWindowBase):
         attrs = self.stackedWidget.currentWidget().get_attributes()
         max_frame_pos = self.videoPlaybackWidget.getMaxFramePos()
 
-        col = pd.MultiIndex.from_product([range(tracking_n), [k for k in attrs if attrs[k]], ['x', 'y']])
+        tuples = []
+        for i in range(tracking_n):
+            for k, t in attrs.items():
+                if t==False:
+                    continue
+                for v in t:
+                    tuples.append((i, k, v))
+
+        col = pd.MultiIndex.from_tuples(tuples)
         self.df = pd.DataFrame(index=range(max_frame_pos+1), columns=col, dtype=np.float64).sort_index().sort_index(axis=1)
 
         if self.trackingPathGroup is not None:
@@ -406,19 +414,17 @@ class Ui_MainWindow(QMainWindow, Ui_MainWindowBase):
 
         img = self.filter.filterFunc(self.cv_img.copy())
         res = self.stackedWidget.currentWidget().track(self.cv_img.copy(), img)
+        attrs = self.stackedWidget.currentWidget().get_attributes()
 
-        if 'position' in res[0]:
-            for i, dic in enumerate(res):
-                self.df.loc[self.currentFrameNo, (i, 'position')] = dic['position']
-        if 'arrow' in res[0]:
-            for i, dic in enumerate(res):
-                self.df.loc[self.currentFrameNo, (i, 'arrow')] = dic['arrow']
-        print(self.df.loc[self.currentFrameNo])
+        for k,v in res.items():
+            if not attrs[k]:
+                continue
+            for i in range(len(v)):
+                self.df.loc[self.currentFrameNo, (i, k)] = v[i]
 
         if update:
-            if 'rect' in res[0]:
-                for rect_item, res_item in zip(self.rect_items, res):
-                    rect = res_item['rect']
+            if 'rect' in res:
+                for rect_item, rect in zip(self.rect_items, res['rect']):
                     rect_item.setRect(QRectF(QPointF(*rect['topLeft']), QPointF(*rect['bottomRight'])))
                     rect_item.show()
 

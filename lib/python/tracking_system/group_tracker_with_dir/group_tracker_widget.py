@@ -53,7 +53,7 @@ class Widget(Ui_group_tracker_widget, QtWidgets.QWidget):
         return self.nObjectsSpinBox.value()
 
     def get_attributes(self):
-        return {'position':True, 'arrow':True}
+        return {'position':('x', 'y'), 'arrow':('x', 'y')}
 
     def track(self, original_img, filtered_img):
         n_objects = self.nObjectsSpinBox.value()
@@ -96,11 +96,7 @@ class Widget(Ui_group_tracker_widget, QtWidgets.QWidget):
                 dots = list(map(lambda x: np.dot(x, self.dirs[i]), l))
                 self.dirs[i] = l[np.argmax(dots)]
 
-        out = []
-        for p,d in zip(res, self.dirs):
-            out.append({'position': p, 'arrow':d+p})
-
-        return out
+        return {'position': res, 'arrow': self.dirs+res}
 
     @pyqtSlot()
     def reset_button_pressed(self):
