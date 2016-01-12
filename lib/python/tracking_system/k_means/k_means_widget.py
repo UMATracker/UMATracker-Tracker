@@ -45,7 +45,10 @@ class Widget(Ui_Kmeans_widget, QtWidgets.QWidget):
             self.k_means = cluster.KMeans(n_clusters=n_objects)
 
         non_zero_pos = np.transpose(np.nonzero(filtered_img.T))
-        center_pos = self.k_means.fit(non_zero_pos).cluster_centers_
+        try:
+            center_pos = self.k_means.fit(non_zero_pos).cluster_centers_
+        except:
+            return {'position': np.array([np.nan for i in range(n_objects)])}
 
         return {'position': center_pos}
 
