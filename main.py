@@ -152,6 +152,8 @@ class Ui_MainWindow(QMainWindow, Ui_MainWindowBase):
             if state==Qt.Checked:
                 arrow_item.show()
 
+        self.updateInputGraphicsView()
+
     def pathCheckBoxStateChanged(self, state):
         if self.trackingPathGroup is None:
             return
@@ -160,6 +162,8 @@ class Ui_MainWindow(QMainWindow, Ui_MainWindowBase):
             self.trackingPathGroup.hide()
         if state==Qt.Checked:
             self.trackingPathGroup.show()
+
+        self.updateInputGraphicsView()
 
     def reset(self):
         self.videoPlaybackWidget.stop()
