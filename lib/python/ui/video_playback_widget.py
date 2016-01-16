@@ -305,6 +305,9 @@ class VideoPlaybackWidget(QtWidgets.QWidget, Ui_VideoPlaybackWidget):
     def videoPlayback(self):
         if self.isOpened():
             nextFrame = self.getNextFramePos()
+            if nextFrame < 0:
+                self.stop()
+                return
             self.playbackSlider.setValue(nextFrame)
 
     @pyqtSlot(int)
