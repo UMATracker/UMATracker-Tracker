@@ -105,6 +105,7 @@ class Ui_MainWindow(QMainWindow, Ui_MainWindowBase):
 
         self.arrowCheckBox.stateChanged.connect(self.arrowCheckBoxStateChanged)
         self.pathCheckBox.stateChanged.connect(self.pathCheckBoxStateChanged)
+        self.reverseArrowColorCheckBox.stateChanged.connect(self.reverseArrowColorCheckBoxStateChanged)
 
         self.filter = None
         self.filterIO = None
@@ -162,6 +163,18 @@ class Ui_MainWindow(QMainWindow, Ui_MainWindowBase):
             self.trackingPathGroup.hide()
         if state==Qt.Checked:
             self.trackingPathGroup.show()
+
+        self.updateInputGraphicsView()
+
+    def reverseArrowColorCheckBoxStateChanged(self, state):
+        if self.arrow_items is None:
+            return
+
+        for arrow_item in self.arrow_items:
+            if state==Qt.Unchecked:
+                arrow_item.setColor([0,0,0])
+            if state==Qt.Checked:
+                arrow_item.setColor([255,255,255])
 
         self.updateInputGraphicsView()
 
