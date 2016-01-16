@@ -277,14 +277,17 @@ class Ui_MainWindow(QMainWindow, Ui_MainWindowBase):
     def radiusSpinBoxValueChanged(self, i):
         if self.trackingPathGroup is not None:
             self.trackingPathGroup.setRadius(i)
+        self.updateInputGraphicsView()
 
     def lineWidthSpinBoxValueChanged(self, i):
         if self.trackingPathGroup is not None:
             self.trackingPathGroup.setLineWidth(i)
+        self.updateInputGraphicsView()
 
     def overlayFrameNoSpinBoxValueChanged(self, i):
         if self.trackingPathGroup is not None:
             self.trackingPathGroup.setOverlayFrameNo(i)
+        self.updateInputGraphicsView()
 
     def stackedWidgetCurrentChanged(self, i):
         print('current changed: {0}'.format(i))
@@ -414,6 +417,7 @@ class Ui_MainWindow(QMainWindow, Ui_MainWindowBase):
             if self.rect_items is not None:
                 for rect_item in self.rect_items:
                     rect_item.hide()
+            self.updateInputGraphicsView()
             return
 
         img = self.filter.filterFunc(self.cv_img.copy())
