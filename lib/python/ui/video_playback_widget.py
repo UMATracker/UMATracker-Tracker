@@ -103,6 +103,8 @@ class VideoPlaybackWidget(QtWidgets.QWidget, Ui_VideoPlaybackWidget):
         self.currentFrameNo = -1
         self.ret = None
         self.currentFrame = None
+        self.playbackDelta = 1
+        self.maxTickableFrameNo = 0
 
         self.playbackTimer = QtCore.QTimer()
         self.playbackTimer.timeout.connect(self.videoPlayback)
@@ -165,6 +167,7 @@ class VideoPlaybackWidget(QtWidgets.QWidget, Ui_VideoPlaybackWidget):
             ret, frame = self.readFrame(0)
             if ret:
                 self.currentFrameNo = 0
+                self.setMaxTickableFrameNo(self.getMaxFramePos())
                 self.setFrame(frame, 0)
                 return True
             else:
@@ -202,7 +205,7 @@ class VideoPlaybackWidget(QtWidgets.QWidget, Ui_VideoPlaybackWidget):
             return (False, None)
         if self.ret is not None:
             if frameNo is None:
-                frameNo = self.currentFrameNo + 1
+                frameNo = self.currentFrameNo + self.playbackDelta
 
             if self.getMaxFramePos() < frameNo:
                 return (False, None)
@@ -234,8 +237,8 @@ class VideoPlaybackWidget(QtWidgets.QWidget, Ui_VideoPlaybackWidget):
 
             if changeSlider and frameNo != self.playbackSlider.value():
                 self.playbackSlider.setValue(frameNo)
-            else:
-                self.setFrame(frame, frameNo)
+
+            self.setFrame(frame, frameNo)
 
     def getFramePos(self):
         if self.isOpened():
@@ -250,14 +253,14 @@ class VideoPlaybackWidget(QtWidgets.QWidget, Ui_VideoPlaybackWidget):
             return -1
 
     def getNextFramePos(self):
-        pos = self.getFramePos()+1
+        pos = self.getFramePos() + self.playbackDelta
         if 0 <= pos and pos <= self.getMaxFramePos():
             return pos
         else:
             return -1
 
     def getPrevFramePos(self):
-        pos = self.getFramePos() - 1
+        pos = self.getFramePos() - self.playbackDelta
         if 0 <= pos:
             return pos
         else:
@@ -288,12 +291,17 @@ class VideoPlaybackWidget(QtWidgets.QWidget, Ui_VideoPlaybackWidget):
     @pyqtSlot()
     def moveLastButtonClicked(self):
         self.stop()
-        maxFrameNo = self.getMaxFramePos()
+        maxFrameNo = min(self.getMaxFramePos(), self.maxTickableFrameNo)
+
         self.moveToFrame(maxFrameNo)
 
     @pyqtSlot()
     def moveNextButtonClicked(self):
         self.stop()
+
+        if self.getFramePos() > self.maxTickableFrameNo:
+            return
+
         self.moveToFrame()
 
     @pyqtSlot()
@@ -308,7 +316,8 @@ class VideoPlaybackWidget(QtWidgets.QWidget, Ui_VideoPlaybackWidget):
             if nextFrame < 0:
                 self.stop()
                 return
-            self.playbackSlider.setValue(nextFrame)
+
+            self.moveToFrame()
 
     @pyqtSlot(int)
     def playbackSliderActionTriggered(self, value):
@@ -318,11 +327,26 @@ class VideoPlaybackWidget(QtWidgets.QWidget, Ui_VideoPlaybackWidget):
 
     @pyqtSlot(int)
     def playbackSliderValueChanged(self, value):
-        currentValue = self.playbackSlider.value()
-        logger.debug('Slider val: {0}, {1}'.format(currentValue, value))
+        if self.isPlaying():
+            return
+
+        quotient = int(value/self.playbackDelta)
+        remainder = value/self.playbackDelta
+
+        value = quotient * self.playbackDelta
+        if remainder > self.playbackDelta/2:
+            value += 1
+
+        if value == self.currentFrameNo:
+            return
+
+        logger.debug('Slider val: {0}'.format(value))
 
         if self.isOpened():
-            self.moveToFrame(currentValue, False)
+            if value > self.maxTickableFrameNo:
+                self.playbackSlider.setValue(self.maxTickableFrameNo)
+            else:
+                self.moveToFrame(value, False)
 
     @pyqtSlot()
     def setMinRange(self):
@@ -343,6 +367,14 @@ class VideoPlaybackWidget(QtWidgets.QWidget, Ui_VideoPlaybackWidget):
             return 0
         else:
             return int(self.playbackSlider.max * self.getMaxFramePos())
+
+    def setMaxTickableFrameNo(self, n):
+        self.maxTickableFrameNo = n
+
+    def setPlaybackDelta(self, delta):
+        self.playbackDelta = delta
+        self.playbackSlider.setSingleStep(delta)
+        self.playbackSlider.setPageStep(delta)
 
 if __name__ == "__main__":
     app = QtWidgets.QApplication(sys.argv)

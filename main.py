@@ -233,7 +233,6 @@ class Ui_MainWindow(QMainWindow, Ui_MainWindowBase):
             self.cv_img = self.videoPlaybackWidget.getCurrentFrame()
             self.currentFrameNo = 0
             self.initializeTrackingSystem()
-            self.evaluate()
 
             return True
         else:
@@ -253,7 +252,6 @@ class Ui_MainWindow(QMainWindow, Ui_MainWindowBase):
             self.filter = None
 
             self.initializeTrackingSystem()
-            self.evaluate()
 
     def saveCSVFile(self, activated=False, filePath = None):
         if self.df is not None:
@@ -407,6 +405,9 @@ class Ui_MainWindow(QMainWindow, Ui_MainWindowBase):
                 self.inputScene.addItem(arrow_item)
 
         self.isInitialized = True
+        self.videoPlaybackWidget.setMaxTickableFrameNo(0)
+        self.videoPlaybackWidget.moveToFrame(0)
+        self.videoPlaybackWidget.setPlaybackDelta(self.playbackDeltaSpinBox.value())
 
     def evaluate(self, update=True):
         if not self.isInitialized:
@@ -429,6 +430,8 @@ class Ui_MainWindow(QMainWindow, Ui_MainWindowBase):
                 continue
             for i in range(len(v)):
                 self.df.loc[self.currentFrameNo, (i, k)] = v[i]
+
+        self.videoPlaybackWidget.setMaxTickableFrameNo(self.currentFrameNo)
 
         if update:
             if 'rect' in res:
