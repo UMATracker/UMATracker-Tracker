@@ -421,10 +421,12 @@ class Ui_MainWindow(QMainWindow, Ui_MainWindowBase):
                     arrow_item.hide()
                 self.inputScene.addItem(arrow_item)
 
-        self.isInitialized = True
         self.videoPlaybackWidget.setMaxTickableFrameNo(0)
-        self.videoPlaybackWidget.moveToFrame(0)
+        if self.currentFrameNo != 0:
+            self.videoPlaybackWidget.moveToFrame(0)
         self.videoPlaybackWidget.setPlaybackDelta(self.playbackDeltaSpinBox.value())
+
+        self.isInitialized = True
 
     def evaluate(self, update=True):
         if not self.isInitialized:
