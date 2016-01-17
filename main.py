@@ -53,7 +53,7 @@ gen_init_py(tracking_system_path)
 from PyQt5 import QtCore, QtWidgets
 from PyQt5.QtWidgets import QGraphicsScene, QGraphicsView, QGraphicsPixmapItem, QFrame, QFileDialog, QMainWindow, QProgressDialog, QGraphicsRectItem
 from PyQt5.QtGui import QPixmap, QImage, QIcon
-from PyQt5.QtCore import Qt, QRectF, QPointF
+from PyQt5.QtCore import Qt, QRectF, QPointF, pyqtSignal, pyqtSlot
 
 import cv2
 import numpy as np
@@ -90,6 +90,8 @@ logger.setLevel(DEBUG)
 logger.addHandler(handler)
 
 class Ui_MainWindow(QMainWindow, Ui_MainWindowBase):
+    updateFrame = pyqtSignal()
+
     def __init__(self):
         super(Ui_MainWindow, self).__init__()
         self.setupUi(self)
@@ -106,6 +108,8 @@ class Ui_MainWindow(QMainWindow, Ui_MainWindowBase):
         self.arrowCheckBox.stateChanged.connect(self.arrowCheckBoxStateChanged)
         self.pathCheckBox.stateChanged.connect(self.pathCheckBoxStateChanged)
         self.reverseArrowColorCheckBox.stateChanged.connect(self.reverseArrowColorCheckBoxStateChanged)
+
+        self.updateFrame.connect(self.videoPlaybackWidget.videoPlayback)
 
         self.filter = None
         self.filterIO = None
@@ -341,7 +345,7 @@ class Ui_MainWindow(QMainWindow, Ui_MainWindowBase):
 
     def resetDataframe(self):
         self.initializeTrackingSystem()
-        self.videoPlaybackWidget.moveToFrame(0)
+        self.evaluate()
 
     def restartDataframe(self):
         if self.df is None:
@@ -364,6 +368,11 @@ class Ui_MainWindow(QMainWindow, Ui_MainWindowBase):
     def initializeTrackingSystem(self):
         if  not (self.videoPlaybackWidget.isOpened() and 'filterOperation' in globals()):
             return False
+
+        ret, frame = self.videoPlaybackWidget.readFrame(0)
+        self.cv_img = frame
+        self.currentFrameNo = 0
+        self.videoPlaybackWidget.setSliderValueWithoutSignal(0)
 
         self.filter = filterOperation(self.cv_img)
         self.filter.fgbg = self.filterIO.getBackgroundImg()
@@ -422,8 +431,8 @@ class Ui_MainWindow(QMainWindow, Ui_MainWindowBase):
                 self.inputScene.addItem(arrow_item)
 
         self.videoPlaybackWidget.setMaxTickableFrameNo(0)
-        if self.currentFrameNo != 0:
-            self.videoPlaybackWidget.moveToFrame(0)
+        # if self.currentFrameNo != 0:
+        #     self.videoPlaybackWidget.moveToFrame(0)
         self.videoPlaybackWidget.setPlaybackDelta(self.playbackDeltaSpinBox.value())
 
         self.isInitialized = True
@@ -460,6 +469,7 @@ class Ui_MainWindow(QMainWindow, Ui_MainWindowBase):
 
             self.updatePath()
             self.updateInputGraphicsView()
+            self.updateFrame.emit()
 
     def runObjectTracking(self):
         if self.filter is None or not self.videoPlaybackWidget.isOpened():
