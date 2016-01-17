@@ -273,6 +273,7 @@ class Ui_MainWindow(QMainWindow, Ui_MainWindowBase):
             self.filter = None
 
             self.initializeTrackingSystem()
+            self.evaluate()
 
     def saveCSVFile(self, activated=False, filePath = None):
         if self.df is not None:
@@ -369,10 +370,11 @@ class Ui_MainWindow(QMainWindow, Ui_MainWindowBase):
         if  not (self.videoPlaybackWidget.isOpened() and 'filterOperation' in globals()):
             return False
 
-        ret, frame = self.videoPlaybackWidget.readFrame(0)
-        self.cv_img = frame
-        self.currentFrameNo = 0
-        self.videoPlaybackWidget.setSliderValueWithoutSignal(0)
+        if self.currentFrameNo != 0:
+            ret, frame = self.videoPlaybackWidget.readFrame(0)
+            self.cv_img = frame
+            self.currentFrameNo = 0
+            self.videoPlaybackWidget.setSliderValueWithoutSignal(0)
 
         self.filter = filterOperation(self.cv_img)
         self.filter.fgbg = self.filterIO.getBackgroundImg()
