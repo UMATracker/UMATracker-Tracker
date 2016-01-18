@@ -51,7 +51,7 @@ tracking_system_path = ['lib', 'python', 'tracking_system']
 gen_init_py(tracking_system_path)
 
 from PyQt5 import QtCore, QtWidgets
-from PyQt5.QtWidgets import QGraphicsScene, QGraphicsView, QGraphicsPixmapItem, QFrame, QFileDialog, QMainWindow, QProgressDialog, QGraphicsRectItem
+from PyQt5.QtWidgets import QGraphicsScene, QGraphicsView, QGraphicsPixmapItem, QFrame, QFileDialog, QMainWindow, QProgressDialog, QGraphicsRectItem, QActionGroup
 from PyQt5.QtGui import QPixmap, QImage, QIcon
 from PyQt5.QtCore import Qt, QRectF, QPointF, pyqtSignal, pyqtSlot
 
@@ -211,6 +211,8 @@ class Ui_MainWindow(QMainWindow, Ui_MainWindowBase):
 
         self.actionRunObjectTracking.triggered.connect(self.runObjectTracking)
 
+
+        self.menuAlgorithmsActionGroup = QActionGroup(self.menuAlgorithms)
         for module_path in get_modules(tracking_system_path):
             module_str = '.'.join(module_path)
             module = importlib.import_module(module_str)
@@ -229,6 +231,12 @@ class Ui_MainWindow(QMainWindow, Ui_MainWindowBase):
 
             action = self.menuAlgorithms.addAction(widget.get_name())
             action.triggered.connect(self.generateAlgorithmsMenuClicked(widget))
+            action.setCheckable(True)
+            action.setActionGroup(self.menuAlgorithmsActionGroup)
+
+            if len(self.menuAlgorithmsActionGroup.actions()) == 1:
+                action.setChecked(True)
+                self.algorithmSettingsGroupBox.setTitle(widget.get_name())
 
     def generateAlgorithmsMenuClicked(self, widget):
         def action_triggered(activated=False):
@@ -311,7 +319,9 @@ class Ui_MainWindow(QMainWindow, Ui_MainWindowBase):
 
     def stackedWidgetCurrentChanged(self, i):
         print('current changed: {0}'.format(i))
-        self.stackedWidget.currentWidget().estimator_init()
+        currentWidget = self.stackedWidget.currentWidget()
+        currentWidget.estimator_init()
+        self.algorithmSettingsGroupBox.setTitle(currentWidget.get_name())
         self.resetDataframe()
 
     def updateInputGraphicsView(self):
