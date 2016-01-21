@@ -31,7 +31,7 @@ class Widget(Ui_OpticalFlowDualTVL1_widget, QtWidgets.QWidget):
         self.opt_flow = None
 
     def reset_estimator(self, kv):
-        center_pos = kv['position']
+        self.prev_pos = kv['position']
 
     def get_name(self):
         return 'Optical Flow (DualTVL1)'

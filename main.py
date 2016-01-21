@@ -459,6 +459,7 @@ class Ui_MainWindow(QMainWindow, Ui_MainWindowBase):
                 for rect_item in self.rect_items:
                     rect_item.hide()
             self.updateInputGraphicsView()
+            self.updateFrame.emit()
             return
 
         img = self.filter.filterFunc(self.cv_img.copy())
