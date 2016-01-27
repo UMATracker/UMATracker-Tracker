@@ -28,7 +28,7 @@ class MovableArrow(QGraphicsLineItem):
         self.isMousePressed = False
         self.setFlags(QGraphicsItem.ItemIsSelectable |
                       QGraphicsItem.ItemIsFocusable |
-                      QGraphicsItem.ItemIsMovable |
+                      #QGraphicsItem.ItemIsMovable |
                       QGraphicsItem.ItemSendsGeometryChanges
                       )
 
