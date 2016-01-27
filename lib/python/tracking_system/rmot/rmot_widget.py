@@ -35,6 +35,7 @@ class Widget(Ui_RMOT_widget, QtWidgets.QWidget):
         self.k_means = None
 
     def reset_estimator(self, kv):
+        center_pos = kv['position']
         self.set_new_estimator(center_pos)
 
     def set_new_estimator(self, center_pos):
