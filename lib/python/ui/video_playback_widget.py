@@ -381,6 +381,9 @@ class VideoPlaybackWidget(QtWidgets.QWidget, Ui_VideoPlaybackWidget):
     def setMaxTickableFrameNo(self, n):
         self.maxTickableFrameNo = n
 
+    def getMaxTickableFrameNo(self):
+        return self.maxTickableFrameNo
+
     def setPlaybackDelta(self, delta):
         self.playbackDelta = delta
         self.playbackSlider.setSingleStep(delta)

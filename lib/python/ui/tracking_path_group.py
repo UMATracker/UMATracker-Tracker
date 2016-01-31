@@ -90,6 +90,10 @@ class TrackingPathGroup(QGraphicsObject):
         for item in self.itemList:
             item.setDrawItem(pos, flag)
 
+    def setBrightness(self, val):
+        for item in self.itemList:
+            item.setBrightness(val)
+
     def setDrawLine(self, flag):
         self.drawLineFlag = flag
         for item in self.itemList:
@@ -99,6 +103,10 @@ class TrackingPathGroup(QGraphicsObject):
         self.radius = r
         for item in self.itemList:
             item.setRadius(self.radius)
+
+    def setOpacity(self, val):
+        for item in self.itemList:
+            item.setOpacity(val)
 
     def setLineWidth(self, w):
         self.lineWidth = w

@@ -16,6 +16,7 @@ class MovablePolyLine(QGraphicsObject):
         self.color = QColor(255,0,0)
 
         self.lineWidth = 5
+        self.brightness = 0
 
         self.setOpacity(0.5)
         # self.setHandlesChildEvents(False)
@@ -58,6 +59,15 @@ class MovablePolyLine(QGraphicsObject):
         return self.lineWidth
 
     def setColor(self, rgb):
+        rgb = [min(val+self.brightness, 255) for val in rgb]
+        self.color = QColor(*rgb)
+        for item in self.itemList:
+            item.setBrush(self.color)
+
+    def setBrightness(self, val):
+        delta = val - self.brightness
+        self.brightness = val
+        rgb = [min(val+delta, 255) for val in [self.color.red(), self.color.green(), self.color.blue()]]
         self.color = QColor(*rgb)
         for item in self.itemList:
             item.setBrush(self.color)

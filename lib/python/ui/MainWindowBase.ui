@@ -212,6 +212,34 @@
             </item>
            </layout>
           </item>
+          <item>
+           <layout class="QHBoxLayout" name="horizontalLayout_8">
+            <item>
+             <widget class="QLabel" name="label_5">
+              <property name="text">
+               <string>Brightness</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QSpinBox" name="lineBrightnessSpinBox">
+              <property name="maximum">
+               <number>255</number>
+              </property>
+             </widget>
+            </item>
+           </layout>
+          </item>
+          <item>
+           <widget class="QCheckBox" name="opaqueCheckBox">
+            <property name="text">
+             <string>Opaque</string>
+            </property>
+            <property name="checked">
+             <bool>false</bool>
+            </property>
+           </widget>
+          </item>
          </layout>
         </widget>
        </item>
@@ -226,7 +254,7 @@
      <x>0</x>
      <y>0</y>
      <width>1060</width>
-     <height>24</height>
+     <height>21</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuFiles">

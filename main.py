@@ -109,6 +109,9 @@ class Ui_MainWindow(QMainWindow, Ui_MainWindowBase):
         self.pathCheckBox.stateChanged.connect(self.pathCheckBoxStateChanged)
         self.reverseArrowColorCheckBox.stateChanged.connect(self.reverseArrowColorCheckBoxStateChanged)
 
+        self.lineBrightnessSpinBox.valueChanged.connect(self.lineBrightnessSpinBoxValueChanged)
+        self.opaqueCheckBox.stateChanged.connect(self.opaqueCheckBoxStateChanged)
+
         self.updateFrame.connect(self.videoPlaybackWidget.videoPlayback)
 
         self.filter = None
@@ -181,6 +184,18 @@ class Ui_MainWindow(QMainWindow, Ui_MainWindowBase):
                 arrow_item.setColor([255,255,255])
 
         self.updateInputGraphicsView()
+
+    def opaqueCheckBoxStateChanged(self, state):
+        if self.trackingPathGroup is None:
+            return
+
+        if state==Qt.Unchecked:
+            self.trackingPathGroup.setOpacity(0.5)
+        if state==Qt.Checked:
+            self.trackingPathGroup.setOpacity(1.0)
+
+        self.updateInputGraphicsView()
+
 
     def reset(self):
         self.videoPlaybackWidget.stop()
@@ -315,6 +330,14 @@ class Ui_MainWindow(QMainWindow, Ui_MainWindowBase):
     def overlayFrameNoSpinBoxValueChanged(self, i):
         if self.trackingPathGroup is not None:
             self.trackingPathGroup.setOverlayFrameNo(i)
+        self.updateInputGraphicsView()
+
+    def lineBrightnessSpinBoxValueChanged(self, i):
+        if self.trackingPathGroup is None:
+            return
+
+        self.trackingPathGroup.setBrightness(i)
+
         self.updateInputGraphicsView()
 
     def stackedWidgetCurrentChanged(self, i):
