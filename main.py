@@ -311,7 +311,9 @@ class Ui_MainWindow(QMainWindow, Ui_MainWindowBase):
                 if len(filePath) is not 0:
                     logger.debug("Saving CSV file: {0}".format(filePath))
 
-                    df = self.df[pd.notnull(self.df).any(axis=1)].loc[:,(slice(None),attr)]
+                    row_max = self.videoPlaybackWidget.getMaxTickableFrameNo()
+                    # df = self.df[pd.notnull(self.df).any(axis=1)].loc[:,(slice(None),attr)]
+                    df = self.df.loc[:row_max,(slice(None),attr)]
                     col = ['{0}{1}'.format(l,i) for i in levels[0] for l in levels[2]]
                     df.columns = col
 
