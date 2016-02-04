@@ -50,7 +50,7 @@ sys.path.append(currentDirPath)
 tracking_system_path = ['lib', 'python', 'tracking_system']
 gen_init_py(tracking_system_path)
 
-from PyQt5 import QtCore, QtWidgets
+from PyQt5 import QtCore, QtWidgets, QtGui
 from PyQt5.QtWidgets import QGraphicsScene, QGraphicsView, QGraphicsPixmapItem, QFrame, QFileDialog, QMainWindow, QProgressDialog, QGraphicsRectItem, QActionGroup
 from PyQt5.QtGui import QPixmap, QImage, QIcon
 from PyQt5.QtCore import Qt, QRectF, QPointF, pyqtSignal, pyqtSlot
@@ -124,6 +124,7 @@ class Ui_MainWindow(QMainWindow, Ui_MainWindowBase):
         self.cv_img = None
         self.arrow_items = None
         self.filePath = None
+        self.savedFlag = True
 
     def dragEnterEvent(self,event):
         event.acceptProposedAction()
@@ -138,8 +139,23 @@ class Ui_MainWindow(QMainWindow, Ui_MainWindowBase):
 
         event.acceptProposedAction()
 
-    def closeEvent(self,event):
-        pass
+    def closeEvent(self, event):
+        if self.df is None or self.savedFlag:
+            return
+
+        quit_msg = "Data is not saved.\nAre you sure you want to exit the program?"
+        reply = QtWidgets.QMessageBox.question(
+                self,
+                'Warning',
+                quit_msg,
+                QtWidgets.QMessageBox.Yes,
+                QtWidgets.QMessageBox.No
+                )
+
+        if reply == QtWidgets.QMessageBox.Yes:
+            event.accept()
+        else:
+            event.ignore()
 
     def processDropedFile(self,filePath):
         root,ext = os.path.splitext(filePath)
@@ -328,6 +344,8 @@ class Ui_MainWindow(QMainWindow, Ui_MainWindowBase):
 
                     df.to_csv(filePath)
 
+            self.savedFlag = True
+
     def radiusSpinBoxValueChanged(self, i):
         if self.trackingPathGroup is not None:
             self.trackingPathGroup.setRadius(i)
@@ -507,6 +525,7 @@ class Ui_MainWindow(QMainWindow, Ui_MainWindowBase):
                 self.df.loc[self.currentFrameNo, (i, k)] = v[i]
 
         self.videoPlaybackWidget.setMaxTickableFrameNo(self.currentFrameNo)
+        self.savedFlag = False
 
         if update:
             if 'rect' in res:
