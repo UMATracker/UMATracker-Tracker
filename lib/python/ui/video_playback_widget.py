@@ -394,6 +394,21 @@ class VideoPlaybackWidget(QtWidgets.QWidget, Ui_VideoPlaybackWidget):
         self.playbackSlider.setValue(n)
         self.playbackSlider.valueChanged.connect(self.playbackSliderValueChanged)
 
+    def getVideoInfo(self):
+        if self.ret is None:
+            return None
+
+        num = self.ret.fps_num
+        den = self.ret.fps_den
+
+        return """
+{0}
+
+FPS Numerator: {1}
+FPS Denominator: {2}
+FPS: {3}
+""".format(self.ret.format, num, den, num/den)
+
 if __name__ == "__main__":
     app = QtWidgets.QApplication(sys.argv)
     MainWindow = QtWidgets.QMainWindow()

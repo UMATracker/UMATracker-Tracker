@@ -303,6 +303,15 @@ class Ui_MainWindow(QMainWindow, Ui_MainWindowBase):
             dirctory = os.path.dirname(self.filePath)
             base_name = os.path.splitext(os.path.basename(self.filePath))[0]
 
+            path = os.path.join(dirctory, '{0}-{1}.txt'.format(base_name, "info"))
+            filePath, _ = QFileDialog.getSaveFileName(None, 'Save Info File', path, "TXT files (*.txt)")
+
+            if len(filePath) is not 0:
+                logger.debug("Saving Info file: {0}".format(filePath))
+
+                with open(filePath, 'w') as fp:
+                    fp.write(self.videoPlaybackWidget.getVideoInfo())
+
             levels = self.df.columns.levels
             for attr in levels[1]:
                 path = os.path.join(dirctory, '{0}-{1}.csv'.format(base_name, attr))
