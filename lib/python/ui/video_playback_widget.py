@@ -121,8 +121,10 @@ class VideoPlaybackWidget(QtWidgets.QWidget, Ui_VideoPlaybackWidget):
         self.playbackSlider.setValue(0)
         self.playbackSlider.setRange(0, self.getMaxFramePos())
         self.fps = math.ceil((self.ret.fps_num)/self.ret.fps_den)
-        self.playbackSlider.setSingleStep(self.fps)
-        self.playbackSlider.setPageStep(self.fps)
+        # self.playbackSlider.setSingleStep(self.fps)
+        # self.playbackSlider.setPageStep(self.fps)
+        self.playbackSlider.setSingleStep(1)
+        self.playbackSlider.setPageStep(1)
         self.playbackSlider.setTickInterval(self.fps)
 
         ret, frame = self.readFrame(0)
@@ -155,8 +157,8 @@ class VideoPlaybackWidget(QtWidgets.QWidget, Ui_VideoPlaybackWidget):
             self.playbackSlider.setValue(0)
             self.playbackSlider.setRange(0, self.getMaxFramePos())
             self.fps = math.ceil((self.ret.fps_num)/self.ret.fps_den)
-            self.playbackSlider.setSingleStep(self.fps)
-            self.playbackSlider.setPageStep(self.fps)
+            self.playbackSlider.setSingleStep(1)
+            self.playbackSlider.setPageStep(1)
             self.playbackSlider.setTickInterval(self.fps)
 
             # FIXME:おそらくFFMS2かVapourSynthのバグで，
