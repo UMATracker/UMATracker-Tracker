@@ -53,7 +53,7 @@ gen_init_py(tracking_system_path)
 from PyQt5 import QtCore, QtWidgets, QtGui
 from PyQt5.QtWidgets import QGraphicsScene, QGraphicsView, QGraphicsPixmapItem, QFrame, QFileDialog, QMainWindow, QProgressDialog, QGraphicsRectItem, QActionGroup
 from PyQt5.QtGui import QPixmap, QImage, QIcon
-from PyQt5.QtCore import Qt, QRectF, QPointF, pyqtSignal, pyqtSlot
+from PyQt5.QtCore import Qt, QRectF, QPointF, pyqtSignal, pyqtSlot, QEvent
 
 import cv2
 import numpy as np
@@ -561,12 +561,22 @@ class Ui_MainWindow(QMainWindow, Ui_MainWindowBase):
         self.videoPlaybackWidget.moveToFrame(currentFrameNo)
         progress.setValue(numFrames)
 
+    def eventFilter(self, obj, event):
+        if event.type() == QEvent.KeyPress:
+            print(event.key())
+            if Qt.Key_Home <= event.key() <= Qt.Key_PageDown:
+                self.videoPlaybackWidget.playbackSlider.keyPressEvent(event)
+                return True
+
+        return False
+
 if __name__ == "__main__":
     app = QtWidgets.QApplication(sys.argv)
     MainWindow = Ui_MainWindow()
     MainWindow.setWindowIcon(QIcon(':/icon/icon.ico'))
     MainWindow.setWindowTitle('UMATracker-Tracking')
     MainWindow.show()
+    app.installEventFilter(MainWindow)
     sys.exit(app.exec_())
 
 
