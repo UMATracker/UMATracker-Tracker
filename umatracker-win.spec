@@ -66,16 +66,24 @@ for dir_path, dir_names, file_names in os.walk(numpy_dll_path):
 
 a.binaries += tmp
 
-pyz = PYZ(a.pure, cipher=None)
+pyz = PYZ(a.pure, a.zipped_data, cipher=None)
 
 exe = EXE(pyz,
+        a.scripts,
+        name='UMATracker-Tracker',
+        debug=False,
+        strip=None,
+        upx=True,
+        exclude_binaries=True,
+        console=False, icon='./icon/icon.ico')
+
+coll = COLLECT(exe,
         a.scripts,
         a.binaries,
         a.zipfiles,
         a.datas,
-        a.binaries,
         name='UMATracker-Tracker',
         debug=False,
         strip=None,
-        upx=False,
+        upx=True,
         console=False, icon='./icon/icon.ico')
