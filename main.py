@@ -76,6 +76,8 @@ from lib.python.ui.movable_arrow import MovableArrow
 sampleDataPath = os.path.join(currentDirPath,"data")
 userDir        = os.path.expanduser('~')
 
+filterOperation = None
+
 # Log file setting.
 # import logging
 # logging.basicConfig(filename='MainWindow.log', level=logging.DEBUG)
@@ -278,11 +280,34 @@ class Ui_MainWindow(QMainWindow, Ui_MainWindowBase):
                 pass
         return action_triggered
 
+    def initializeEventDialog(self):
+        quit_msg = "Data is not saved.\nAre you sure you want to reset?"
+        reply = QtWidgets.QMessageBox.question(
+                self,
+                'Warning',
+                quit_msg,
+                QtWidgets.QMessageBox.Yes,
+                QtWidgets.QMessageBox.No
+                )
+
+        if reply == QtWidgets.QMessageBox.Yes:
+            return True
+        else:
+            return False
+
     def openVideoFile(self, activated=False, filePath = None):
         if filePath is None:
             filePath, _ = QFileDialog.getOpenFileName(None, 'Open Video File', userDir)
 
         if len(filePath) is not 0:
+            if filterOperation is not None and self.videoPlaybackWidget.isOpened():
+                if self.initializeEventDialog():
+                    global filterOperation
+                    filterOperation = None
+                    self.removeTrackingGraphicsItems()
+                    self.savedFlag = True
+                else:
+                    return
             self.filePath = filePath
             ret = self.videoPlaybackWidget.openVideo(filePath)
             if not ret:
@@ -292,6 +317,7 @@ class Ui_MainWindow(QMainWindow, Ui_MainWindowBase):
 
             self.cv_img = self.videoPlaybackWidget.getCurrentFrame()
             self.currentFrameNo = 0
+            self.videoPlaybackWidget.setMaxTickableFrameNo(0)
             self.initializeTrackingSystem()
 
             return True
@@ -303,6 +329,15 @@ class Ui_MainWindow(QMainWindow, Ui_MainWindowBase):
             filePath, _ = QFileDialog.getOpenFileName(None, 'Open Block File', userDir, "Block files (*.filter)")
 
         if len(filePath) is not 0:
+            if filterOperation is not None and self.videoPlaybackWidget.isOpened():
+                if self.initializeEventDialog():
+                    self.videoPlaybackWidget.closeVideo()
+                    self.videoPlaybackWidget.hide()
+                    self.removeTrackingGraphicsItems()
+                    self.inputScene.removeItem(self.inputPixmapItem)
+                    self.savedFlag = True
+                else:
+                    return
             logger.debug("Open Filter file: {0}".format(filePath))
 
             self.filterIO = FilterIO(filePath)
@@ -428,8 +463,22 @@ class Ui_MainWindow(QMainWindow, Ui_MainWindowBase):
             kv[key] = np.array(value)
         widget.reset_estimator(kv)
 
+    def removeTrackingGraphicsItems(self):
+        if self.trackingPathGroup is not None:
+            self.inputScene.removeItem(self.trackingPathGroup)
+            self.trackingPathGroup = None
+
+        if self.rect_items is not None:
+            [self.inputScene.removeItem(item) for item in self.rect_items]
+            self.rect_items.clear()
+
+        if self.arrow_items is not None:
+            [self.inputScene.removeItem(item) for item in self.arrow_items]
+            self.arrow_items.clear()
+
     def initializeTrackingSystem(self):
-        if  not (self.videoPlaybackWidget.isOpened() and 'filterOperation' in globals()):
+        self.isInitialized = False
+        if  not (self.videoPlaybackWidget.isOpened() and filterOperation is not None):
             return False
 
         if self.currentFrameNo != 0:
@@ -457,14 +506,7 @@ class Ui_MainWindow(QMainWindow, Ui_MainWindowBase):
         col = pd.MultiIndex.from_tuples(tuples)
         self.df = pd.DataFrame(index=range(max_frame_pos+1), columns=col, dtype=np.float64).sort_index().sort_index(axis=1)
 
-        if self.trackingPathGroup is not None:
-            self.inputScene.removeItem(self.trackingPathGroup)
-
-        if self.rect_items is not None:
-            [self.inputScene.removeItem(item) for item in self.rect_items]
-
-        if self.arrow_items is not None:
-            [self.inputScene.removeItem(item) for item in self.arrow_items]
+        self.removeTrackingGraphicsItems()
 
         if 'position' in attrs:
             self.trackingPathGroup = TrackingPathGroup()
@@ -524,7 +566,7 @@ class Ui_MainWindow(QMainWindow, Ui_MainWindowBase):
             for i in range(len(v)):
                 self.df.loc[self.currentFrameNo, (i, k)] = v[i]
 
-        self.videoPlaybackWidget.setMaxTickableFrameNo(self.currentFrameNo)
+        self.videoPlaybackWidget.setMaxTickableFrameNo(self.currentFrameNo+1)
         self.savedFlag = False
 
         if update:

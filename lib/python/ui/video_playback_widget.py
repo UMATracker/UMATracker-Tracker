@@ -208,6 +208,14 @@ class VideoPlaybackWidget(QtWidgets.QWidget, Ui_VideoPlaybackWidget):
     def isOpened(self):
         return self.ret is not None
 
+    def closeVideo(self):
+        self.currentFrameNo = -1
+        self.ret = None
+        self.currentFrame = None
+        self.playbackDelta = 1
+        self.maxTickableFrameNo = 0
+        self.playFlag = False
+
     def readFrame(self, frameNo=None):
         if frameNo is -1:
             return (False, None)
@@ -282,6 +290,7 @@ class VideoPlaybackWidget(QtWidgets.QWidget, Ui_VideoPlaybackWidget):
 
     def setFrame(self, frame, frameNo):
         logger.debug('Frame No: {0}'.format(frameNo))
+        self.timeLabel.setText('{:,d}/{:,d}'.format(frameNo, self.getMaxFramePos()))
         self.currentFrame = frame
         self.frameChanged.emit(frame, frameNo)
 
@@ -310,7 +319,7 @@ class VideoPlaybackWidget(QtWidgets.QWidget, Ui_VideoPlaybackWidget):
     def moveNextButtonClicked(self):
         self.stop()
 
-        if self.getFramePos() > self.maxTickableFrameNo:
+        if self.getNextFramePos() > self.maxTickableFrameNo:
             return
 
         self.moveToFrame()
@@ -325,7 +334,7 @@ class VideoPlaybackWidget(QtWidgets.QWidget, Ui_VideoPlaybackWidget):
         if self.isPlaying():
             if self.isOpened():
                 nextFrame = self.getNextFramePos()
-                if nextFrame < 0:
+                if nextFrame < 0 or self.maxTickableFrameNo<nextFrame:
                     self.stop()
                     return
 
@@ -343,7 +352,7 @@ class VideoPlaybackWidget(QtWidgets.QWidget, Ui_VideoPlaybackWidget):
             return
 
         quotient = int(value/self.playbackDelta)
-        remainder = value/self.playbackDelta
+        remainder = value%self.playbackDelta
 
         value = quotient * self.playbackDelta
         if remainder > self.playbackDelta/2:
@@ -353,6 +362,7 @@ class VideoPlaybackWidget(QtWidgets.QWidget, Ui_VideoPlaybackWidget):
             return
 
         logger.debug('Slider val: {0}'.format(value))
+        # print(self.playbackSlider.minimum(), self.playbackSlider.maximum(), value)
 
         if self.isOpened():
             if value > self.maxTickableFrameNo:
