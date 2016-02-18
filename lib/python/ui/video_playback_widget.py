@@ -150,7 +150,8 @@ class VideoPlaybackWidget(QtWidgets.QWidget, Ui_VideoPlaybackWidget):
                 return False
 
             try:
-                frame = self.ret.get_frame(0)
+                # TODO: WebCamなど，行儀の悪いファイル用
+                frame = self.ret.get_frame(int(self.getMaxFramePos()/2))
             except ValueError:
                 return False
 
