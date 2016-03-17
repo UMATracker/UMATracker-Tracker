@@ -32,7 +32,20 @@ class GroupTrackerGMM(mixture.GMM):
             if hasattr(self, 'covars_'):
                 self.prev_covars_ = self.covars_.copy()
 
+        print(self.init_params)
+        self.verbose = 2
+
+        if self.init_params != '':
+            self.means_ = cluster.KMeans(
+                    n_clusters=self.n_components,
+                    random_state=self.random_state,
+                    max_iter=10000).fit(X).cluster_centers_
+
         resp = super(GroupTrackerGMM, self)._fit(X, y, do_prediction)
+
+        if self.params == 'wc':
+            self.params = 'wmc'
+
         if self.init_params != '':
             self.lambdas = np.sort(LA.eigvals(self.covars_))
             log_likelihoods, responsibilities = self.score_samples(X)
@@ -46,6 +59,7 @@ class GroupTrackerGMM(mixture.GMM):
                 print('Lost likeli: {0}'.format(log_likelihoods.mean()))
                 means = cluster.KMeans(
                         n_clusters=n_k_means,
+                        max_iter=10000,
                         random_state=self.random_state).fit(X).cluster_centers_
 
                 prev_means_shape = self.prev_means_.shape

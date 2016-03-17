@@ -42,6 +42,7 @@ class Widget(Ui_group_tracker_widget, QtWidgets.QWidget):
     def reset_estimator(self, kv):
         if self.gmm is not None:
             self.gmm.means_[:] = kv['position']
+            self.gmm.params = 'wc'
 
     def get_name(self):
         return 'Group Tracker GMM'
@@ -59,7 +60,7 @@ class Widget(Ui_group_tracker_widget, QtWidgets.QWidget):
         non_zero_pos = np.transpose(np.nonzero(filtered_img.T))
 
         if self.gmm is None:
-            self.gmm = GroupTrackerGMM(n_components=n_objects, covariance_type='full', n_iter=2000)
+            self.gmm = GroupTrackerGMM(n_components=n_objects, covariance_type='full', n_iter=1000, init_params='wc', params='wc')
             self.gmm.set_likelihood_diff_threshold(self.likelihoodDiffThresholdSpinBox.value())
 
         self.gmm._fit(non_zero_pos, n_k_means=n_k_means)
