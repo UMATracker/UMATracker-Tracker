@@ -64,9 +64,9 @@ class Widget(Ui_RMOT_widget, QtWidgets.QWidget):
         n_k_means = self.nKmeansSpinBox.value()
 
         if self.k_means is None:
-            self.k_means = cluster.KMeans(n_clusters=n_objects)
+            self.k_means = cluster.KMeans(n_clusters=n_objects, max_iter=10000)
         elif n_k_means!=self.k_means.n_clusters:
-            self.k_means = cluster.KMeans(n_clusters=n_k_means)
+            self.k_means = cluster.KMeans(n_clusters=n_k_means, max_iter=10000)
 
         non_zero_pos = np.transpose(np.nonzero(filtered_img.T))
         center_pos = self.k_means.fit(non_zero_pos).cluster_centers_
