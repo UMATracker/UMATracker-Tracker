@@ -39,9 +39,11 @@ class Filter:
         return im_dst
 
 def colorFilter(im_in, rgb, dist):
-    im_mask = np.linalg.norm(im_in.astype(np.int32) - np.flipud(rgb), axis=2).astype(np.float32)
+    im_mask = im_in.astype(np.float32)
+    im_mask = np.linalg.norm(im_mask - np.flipud(rgb).astype(np.float32), axis=2)
     im_mask = cv2.threshold(im_mask, dist, 255, cv2.THRESH_BINARY_INV)[1].astype(np.uint8)
     im_dst = cv2.bitwise_and(im_in, im_in, mask=im_mask)
+
     return im_dst
 
 
