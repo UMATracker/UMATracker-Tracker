@@ -415,7 +415,12 @@ class Ui_MainWindow(QMainWindow, Ui_MainWindowBase):
         if self.inputPixmapItem is not None:
             self.inputScene.removeItem(self.inputPixmapItem)
 
-        qimg = misc.cvMatToQImage(self.cv_img)
+
+        if self.filter is not None and self.filter.resize_flag:
+            qimg = misc.cvMatToQImage(cv2.pyrDown(self.cv_img))
+        else:
+            qimg = misc.cvMatToQImage(self.cv_img)
+
         pixmap = QPixmap.fromImage(qimg)
 
         self.inputPixmapItem = QGraphicsPixmapItem(pixmap)
