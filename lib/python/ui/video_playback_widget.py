@@ -405,6 +405,8 @@ class VideoPlaybackWidget(QtWidgets.QWidget, Ui_VideoPlaybackWidget):
     def setSliderValueWithoutSignal(self, n):
         self.playbackSlider.valueChanged.disconnect()
         self.playbackSlider.setValue(n)
+        self.timeLabel.setText('{:,d}/{:,d}'.format(n, self.getMaxFramePos()))
+        self.currentFrameNo = n
         self.playbackSlider.valueChanged.connect(self.playbackSliderValueChanged)
 
     def getVideoInfo(self):

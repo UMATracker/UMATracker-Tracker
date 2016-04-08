@@ -565,7 +565,7 @@ class Ui_MainWindow(QMainWindow, Ui_MainWindowBase):
             for i in range(len(v)):
                 self.df.loc[self.currentFrameNo, (i, k)] = v[i]
 
-        self.videoPlaybackWidget.setMaxTickableFrameNo(self.currentFrameNo+1)
+        self.videoPlaybackWidget.setMaxTickableFrameNo(self.currentFrameNo+self.videoPlaybackWidget.playbackDelta)
         self.savedFlag = False
 
         if update:
