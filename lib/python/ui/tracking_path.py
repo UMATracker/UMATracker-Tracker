@@ -126,6 +126,7 @@ class TrackingPath(QGraphicsObject):
             rect = QRectF(-self.radius, -self.radius, diameter, diameter)
 
             if self.itemPos is not None:
+                # TODO: NaNの時のEllipseItemの挙動を考える
                 point = self.points[self.itemPos]
 
                 if not isinstance(self.item, self.itemType):
