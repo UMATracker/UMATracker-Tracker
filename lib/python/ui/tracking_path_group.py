@@ -130,6 +130,7 @@ class TrackingPathGroup(QGraphicsObject):
         pos = self.currentFrameNo - min_value
 
         for i, item in enumerate(self.itemList):
+            # TODO: 内部データ表現を再考する必要あり．
             array = self.df.loc[min_value:max_value, (i,'position')].as_matrix()
             if pos not in range(len(array)):
                 pos = None
