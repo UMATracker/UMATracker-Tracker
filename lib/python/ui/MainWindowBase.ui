@@ -213,24 +213,6 @@
            </layout>
           </item>
           <item>
-           <layout class="QHBoxLayout" name="horizontalLayout_8">
-            <item>
-             <widget class="QLabel" name="label_5">
-              <property name="text">
-               <string>Brightness</string>
-              </property>
-             </widget>
-            </item>
-            <item>
-             <widget class="QSpinBox" name="lineBrightnessSpinBox">
-              <property name="maximum">
-               <number>255</number>
-              </property>
-             </widget>
-            </item>
-           </layout>
-          </item>
-          <item>
            <widget class="QCheckBox" name="opaqueCheckBox">
             <property name="text">
              <string>Opaque</string>
@@ -254,7 +236,7 @@
      <x>0</x>
      <y>0</y>
      <width>1060</width>
-     <height>21</height>
+     <height>22</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuFiles">
@@ -281,9 +263,16 @@
      <string>Algorithms</string>
     </property>
    </widget>
+   <widget class="QMenu" name="menuSettings">
+    <property name="title">
+     <string>Settings</string>
+    </property>
+    <addaction name="actionTrackingPathColor"/>
+   </widget>
    <addaction name="menuFiles"/>
    <addaction name="menuRun"/>
    <addaction name="menuAlgorithms"/>
+   <addaction name="menuSettings"/>
   </widget>
   <widget class="QStatusBar" name="statusbar"/>
   <action name="actionOpenVideo">
@@ -322,6 +311,11 @@
   <action name="actionRunObjectTracking">
    <property name="text">
     <string>Run Object Tracking</string>
+   </property>
+  </action>
+  <action name="actionTrackingPathColor">
+   <property name="text">
+    <string>Tracking Path Color</string>
    </property>
   </action>
  </widget>

@@ -111,7 +111,6 @@ class Ui_MainWindow(QMainWindow, Ui_MainWindowBase):
         self.pathCheckBox.stateChanged.connect(self.pathCheckBoxStateChanged)
         self.reverseArrowColorCheckBox.stateChanged.connect(self.reverseArrowColorCheckBoxStateChanged)
 
-        self.lineBrightnessSpinBox.valueChanged.connect(self.lineBrightnessSpinBoxValueChanged)
         self.opaqueCheckBox.stateChanged.connect(self.opaqueCheckBoxStateChanged)
 
         self.updateFrame.connect(self.videoPlaybackWidget.videoPlayback)
@@ -243,7 +242,7 @@ class Ui_MainWindow(QMainWindow, Ui_MainWindowBase):
         self.actionSaveCSVFile.triggered.connect(self.saveCSVFile)
 
         self.actionRunObjectTracking.triggered.connect(self.runObjectTracking)
-
+        self.actionTrackingPathColor.triggered.connect(self.openTrackingPathColorSelectorDialog)
 
         self.menuAlgorithmsActionGroup = QActionGroup(self.menuAlgorithms)
         for module_path in get_modules(tracking_system_path):
@@ -271,9 +270,12 @@ class Ui_MainWindow(QMainWindow, Ui_MainWindowBase):
                 action.setChecked(True)
                 self.algorithmSettingsGroupBox.setTitle(widget.get_name())
 
+    def openTrackingPathColorSelectorDialog(self, activated=False):
+        if self.trackingPathGroup is not None:
+            self.trackingPathGroup.openColorSelectorDialog(self)
+
     def generateAlgorithmsMenuClicked(self, widget):
         def action_triggered(activated=False):
-            print('trig {0}'.format(widget))
             if widget is not self.stackedWidget.currentWidget():
                 self.stackedWidget.setCurrentWidget(widget)
             else:
@@ -396,16 +398,7 @@ class Ui_MainWindow(QMainWindow, Ui_MainWindowBase):
             self.trackingPathGroup.setOverlayFrameNo(i)
         self.updateInputGraphicsView()
 
-    def lineBrightnessSpinBoxValueChanged(self, i):
-        if self.trackingPathGroup is None:
-            return
-
-        self.trackingPathGroup.setBrightness(i)
-
-        self.updateInputGraphicsView()
-
     def stackedWidgetCurrentChanged(self, i):
-        print('current changed: {0}'.format(i))
         currentWidget = self.stackedWidget.currentWidget()
         currentWidget.estimator_init()
         self.algorithmSettingsGroupBox.setTitle(currentWidget.get_name())
@@ -525,6 +518,8 @@ class Ui_MainWindow(QMainWindow, Ui_MainWindowBase):
             r = self.trackingPathGroup.autoAdjustRadius(self.cv_img.shape)
             self.lineWidthSpinBox.setValue(lw)
             self.radiusSpinBox.setValue(r)
+
+            self.trackingPathGroup.setItemsAreMovable(True)
 
         if 'rect' in attrs:
             self.rect_items = [QGraphicsRectItem() for i in range(tracking_n)]

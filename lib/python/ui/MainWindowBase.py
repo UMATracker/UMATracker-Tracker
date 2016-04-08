@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Form implementation generated from reading ui file '.\MainWindowBase.ui'
+# Form implementation generated from reading ui file 'MainWindowBase.ui'
 #
 # Created by: PyQt5 UI code generator 5.5.1
 #
@@ -123,16 +123,6 @@ class Ui_MainWindowBase(object):
         self.overlayFrameNoSpinBox.setObjectName("overlayFrameNoSpinBox")
         self.horizontalLayout_4.addWidget(self.overlayFrameNoSpinBox)
         self.verticalLayout.addLayout(self.horizontalLayout_4)
-        self.horizontalLayout_8 = QtWidgets.QHBoxLayout()
-        self.horizontalLayout_8.setObjectName("horizontalLayout_8")
-        self.label_5 = QtWidgets.QLabel(self.algorithmSettingsGroupBox)
-        self.label_5.setObjectName("label_5")
-        self.horizontalLayout_8.addWidget(self.label_5)
-        self.lineBrightnessSpinBox = QtWidgets.QSpinBox(self.algorithmSettingsGroupBox)
-        self.lineBrightnessSpinBox.setMaximum(255)
-        self.lineBrightnessSpinBox.setObjectName("lineBrightnessSpinBox")
-        self.horizontalLayout_8.addWidget(self.lineBrightnessSpinBox)
-        self.verticalLayout.addLayout(self.horizontalLayout_8)
         self.opaqueCheckBox = QtWidgets.QCheckBox(self.algorithmSettingsGroupBox)
         self.opaqueCheckBox.setChecked(False)
         self.opaqueCheckBox.setObjectName("opaqueCheckBox")
@@ -141,7 +131,7 @@ class Ui_MainWindowBase(object):
         self.gridLayout.addWidget(self.gridWidget, 1, 0, 1, 1)
         MainWindowBase.setCentralWidget(self.centralwidget)
         self.menubar = QtWidgets.QMenuBar(MainWindowBase)
-        self.menubar.setGeometry(QtCore.QRect(0, 0, 1060, 21))
+        self.menubar.setGeometry(QtCore.QRect(0, 0, 1060, 22))
         self.menubar.setObjectName("menubar")
         self.menuFiles = QtWidgets.QMenu(self.menubar)
         self.menuFiles.setObjectName("menuFiles")
@@ -149,6 +139,8 @@ class Ui_MainWindowBase(object):
         self.menuRun.setObjectName("menuRun")
         self.menuAlgorithms = QtWidgets.QMenu(self.menubar)
         self.menuAlgorithms.setObjectName("menuAlgorithms")
+        self.menuSettings = QtWidgets.QMenu(self.menubar)
+        self.menuSettings.setObjectName("menuSettings")
         MainWindowBase.setMenuBar(self.menubar)
         self.statusbar = QtWidgets.QStatusBar(MainWindowBase)
         self.statusbar.setObjectName("statusbar")
@@ -167,6 +159,8 @@ class Ui_MainWindowBase(object):
         self.actionSaveCSVFile.setObjectName("actionSaveCSVFile")
         self.actionRunObjectTracking = QtWidgets.QAction(MainWindowBase)
         self.actionRunObjectTracking.setObjectName("actionRunObjectTracking")
+        self.actionTrackingPathColor = QtWidgets.QAction(MainWindowBase)
+        self.actionTrackingPathColor.setObjectName("actionTrackingPathColor")
         self.menuFiles.addAction(self.actionOpenVideo)
         self.menuFiles.addAction(self.actionOpenImage)
         self.menuFiles.addSeparator()
@@ -176,9 +170,11 @@ class Ui_MainWindowBase(object):
         self.menuFiles.addSeparator()
         self.menuFiles.addAction(self.actionQuit)
         self.menuRun.addAction(self.actionRunObjectTracking)
+        self.menuSettings.addAction(self.actionTrackingPathColor)
         self.menubar.addAction(self.menuFiles.menuAction())
         self.menubar.addAction(self.menuRun.menuAction())
         self.menubar.addAction(self.menuAlgorithms.menuAction())
+        self.menubar.addAction(self.menuSettings.menuAction())
 
         self.retranslateUi(MainWindowBase)
         self.actionQuit.triggered.connect(MainWindowBase.close)
@@ -196,11 +192,11 @@ class Ui_MainWindowBase(object):
         self.label.setText(_translate("MainWindowBase", "Radius"))
         self.label_2.setText(_translate("MainWindowBase", "Line Width"))
         self.label_3.setText(_translate("MainWindowBase", "# of overlay"))
-        self.label_5.setText(_translate("MainWindowBase", "Brightness"))
         self.opaqueCheckBox.setText(_translate("MainWindowBase", "Opaque"))
         self.menuFiles.setTitle(_translate("MainWindowBase", "Files"))
         self.menuRun.setTitle(_translate("MainWindowBase", "Run"))
         self.menuAlgorithms.setTitle(_translate("MainWindowBase", "Algorithms"))
+        self.menuSettings.setTitle(_translate("MainWindowBase", "Settings"))
         self.actionOpenVideo.setText(_translate("MainWindowBase", "Open Video"))
         self.actionOpenImage.setText(_translate("MainWindowBase", "Open Image"))
         self.actionOpenFilterSetting.setText(_translate("MainWindowBase", "Open Filter Setting"))
@@ -209,5 +205,6 @@ class Ui_MainWindowBase(object):
         self.actionQuit.setShortcut(_translate("MainWindowBase", "Ctrl+Q"))
         self.actionSaveCSVFile.setText(_translate("MainWindowBase", "Save to CSV"))
         self.actionRunObjectTracking.setText(_translate("MainWindowBase", "Run Object Tracking"))
+        self.actionTrackingPathColor.setText(_translate("MainWindowBase", "Tracking Path Color"))
 
 from .video_playback_widget import VideoPlaybackWidget

@@ -1,4 +1,5 @@
 from .tracking_path import TrackingPath
+from .color_selector_dialog import ColorSelectorDialog
 
 from PyQt5 import QtCore, QtWidgets
 from PyQt5.QtWidgets import QGraphicsScene, QGraphicsView, QGraphicsItem, QGraphicsItemGroup, QGraphicsPixmapItem, QGraphicsEllipseItem, QFrame, QFileDialog, QPushButton, QGraphicsObject, QMenu, QAction
@@ -12,9 +13,10 @@ class TrackingPathGroup(QGraphicsObject):
     def __init__(self, parent=None):
         super(TrackingPathGroup, self).__init__(parent)
 
-        self.setZValue(1000)
+        self.setZValue(10)
         self.drawItemFlag = True
         self.drawLineFlag = True
+        self.areItemsMovable = False
         self.df = None
         self.itemList = []
         self.selectedItemList = []
@@ -23,12 +25,15 @@ class TrackingPathGroup(QGraphicsObject):
         self.num_items = 0
         self.currentFrameNo = 0
         self.overlayFrameNo = 0
-        self.radius = 2.0
+        self.radius = 1.0
         self.lineWidth = 5
 
     def setDataFrame(self, df):
         self.df = df
+        shape = self.df.shape
+
         self.colors = np.random.randint(0, 255, (len(self.df.columns.levels[0]), 3)).tolist()
+        self.colors = [QColor(*rgb) for rgb in self.colors]
 
         scene = self.scene()
         if scene is not None:
@@ -37,13 +42,12 @@ class TrackingPathGroup(QGraphicsObject):
                 del item
         self.itemList.clear()
 
-        for rgb in self.colors:
+        for i, rgb in enumerate(self.colors):
             trackingPath = TrackingPath(self)
             trackingPath.setRect(scene.sceneRect())
             trackingPath.setColor(rgb)
-            trackingPath.setLineWidth(self.lineWidth)
-            trackingPath.setRadius(self.radius)
             trackingPath.itemSelected.connect(self.itemSelected)
+            trackingPath.setText(str(i))
 
             self.itemList.append(trackingPath)
 
@@ -55,7 +59,7 @@ class TrackingPathGroup(QGraphicsObject):
                 removedItem = self.selectedItemList.pop(0)
                 removedItem.selected = False
                 removedItem.itemType = QGraphicsEllipseItem
-                removedItem.setPoints()
+                removedItem.updateLine()
         else:
             try:
                 self.selectedItemList.remove(item)
@@ -83,16 +87,20 @@ class TrackingPathGroup(QGraphicsObject):
         array1[:, :] = tmp
 
         for item in self.selectedItemList:
-            item.setPoints()
+            item.updateLine()
 
-    def setDrawItem(self, pos, flag):
+    def setMarkDelta(self, delta):
+        for item in self.itemList:
+            item.setMarkDelta(delta)
+
+    def setDrawItem(self, flag):
         self.drawItemFlag = flag
         for item in self.itemList:
-            item.setDrawItem(pos, flag)
+            item.setDrawItem(flag)
 
-    def setBrightness(self, val):
+    def setDrawMarkItem(self, flag):
         for item in self.itemList:
-            item.setBrightness(val)
+            item.setDrawMarkItem(flag)
 
     def setDrawLine(self, flag):
         self.drawLineFlag = flag
@@ -104,35 +112,15 @@ class TrackingPathGroup(QGraphicsObject):
         for item in self.itemList:
             item.setRadius(self.radius)
 
-    def setOpacity(self, val):
-        for item in self.itemList:
-            item.setOpacity(val)
-
-    def setLineWidth(self, w):
-        self.lineWidth = w
-        for item in self.itemList:
-            item.setLineWidth(w)
-
-    def autoAdjustLineWidth(self, shape):
-        # TODO: かなり適当
-        m = np.max(shape)
-        lw = max(int(5*m/600), 1)
-        self.setLineWidth(lw)
-        return self.getLineWidth()
-
-    def autoAdjustRadius(self, shape):
-        # TODO: かなり適当
-        m = np.max(shape)
-        r = max(float(5.0*m/600), 5.0)
-        self.setRadius(r)
-        return int(self.getRadius())
-
-    def getLineWidth(self):
-        return self.lineWidth
-
     def setOverlayFrameNo(self, n):
         self.overlayFrameNo = n
         self.setPoints()
+
+    def setItemsAreMovable(self, flag):
+        self.areItemsMovable = flag
+
+        for item in self.itemList:
+            item.setItemIsMovable(flag)
 
     def setPoints(self, frameNo=None):
         if frameNo is not None:
@@ -143,14 +131,16 @@ class TrackingPathGroup(QGraphicsObject):
 
         for i, item in enumerate(self.itemList):
             array = self.df.loc[min_value:max_value, (i,'position')].as_matrix()
-            flags = np.full(len(array), False, dtype=np.bool)
-            if self.drawItemFlag and pos < len(array):
-                flags[pos] = True
+            if pos not in range(len(array)):
+                pos = None
 
-            item.setPoints(array, flags)
+            item.setPoints(array, pos)
 
     def getRadius(self):
         return self.radius
+
+    def getColors(self):
+        return self.colors
 
     def setRect(self, rect):
         self.rect = rect
@@ -160,3 +150,38 @@ class TrackingPathGroup(QGraphicsObject):
 
     def paint(self, painter, option, widget):
         pass
+
+    def setLineWidth(self, w):
+        self.lineWidth = w
+        for item in self.itemList:
+            item.setLineWidth(w)
+
+    def getLineWidth(self):
+        return self.lineWidth
+
+    def autoAdjustLineWidth(self, shape):
+        # TODO: かなり適当
+        m = np.max(shape)
+        lw = max(float(2.5*m/600), 1.0)
+        self.setLineWidth(lw)
+        return self.getLineWidth()
+
+    def autoAdjustRadius(self, shape):
+        # TODO: かなり適当
+        m = np.max(shape)
+        r = max(float(5.0*m/600), 5.0)
+        self.setRadius(r)
+        return int(self.getRadius())
+
+    def openColorSelectorDialog(self, parent):
+        dialog = ColorSelectorDialog(parent)
+
+        for i, rgb in enumerate(self.colors):
+            dialog.addRow(i, rgb)
+        dialog.colorChanged.connect(self.changeTrackingPathColor)
+        dialog.show()
+
+    @pyqtSlot(int, QColor)
+    def changeTrackingPathColor(self, i, color):
+        self.colors[i] = color
+        self.itemList[i].setColor(color)
