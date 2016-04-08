@@ -210,10 +210,12 @@ class TrackingPath(QGraphicsObject):
 
     def setItemIsMovable(self, flag):
         self.isItemMovable = flag
+
         if self.isItemMovable:
             self.item.setFlags(QGraphicsItem.ItemIsMovable | QGraphicsItem.ItemSendsScenePositionChanges)
         else:
-            self.item.setFlags(0)
+            self.item.setFlag(QGraphicsItem.ItemIsMovable, False)
+            self.item.setFlag(QGraphicsItem.ItemSendsScenePositionChanges, False)
 
     def setRect(self, rect):
         self.rect = rect
