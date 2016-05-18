@@ -14,18 +14,13 @@ try:
 except ImportError:
     from group_tracker import GroupTrackerGMM
 
-from mvpa2.suite import *
-import matplotlib.pyplot as plt
-
-
 import shapely.geometry as geometry
 from shapely.ops import cascaded_union, polygonize, unary_union
-from descartes import PolygonPatch
 import networkx as nx
 
-from scipy.interpolate import splev, splprep
-from scipy.spatial import Delaunay
-from scipy.spatial import Voronoi, voronoi_plot_2d
+# from scipy.interpolate import splev, splprep
+# from scipy.spatial import Delaunay
+# from scipy.spatial import Voronoi, voronoi_plot_2d
 import numpy as np
 import math
 
