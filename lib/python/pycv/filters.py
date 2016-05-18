@@ -4,6 +4,10 @@
 import cv2
 import numpy as np
 
+try:
+    import fastColorFilter
+except:
+    pass
 
 # Log output setting.
 # If handler = StreamHandler(), log will output into StandardOutput.
@@ -39,11 +43,15 @@ class Filter:
         return im_dst
 
 def colorFilter(im_in, rgb, dist):
-    im_mask = im_in.astype(np.float32)
-    im_mask = np.linalg.norm(im_mask - np.flipud(rgb).astype(np.float32), axis=2)
-    im_mask = cv2.threshold(im_mask, dist, 255, cv2.THRESH_BINARY_INV)[1].astype(np.uint8)
-    im_dst = cv2.bitwise_and(im_in, im_in, mask=im_mask)
-
+    try:
+        dir(fastColorFilter)
+        im_dst = im_in.copy()
+        fastColorFilter.exec(im_dst, np.flipud(rgb).astype(dtype=np.uint8), dist)
+    except:
+        im_mask = im_in.astype(np.float32)
+        im_mask = np.linalg.norm(im_mask - np.flipud(rgb).astype(np.float32), axis=2)
+        im_mask = cv2.threshold(im_mask, dist, 255, cv2.THRESH_BINARY_INV)[1].astype(np.uint8)
+        im_dst = cv2.bitwise_and(im_in, im_in, mask=im_mask)
     return im_dst
 
 
