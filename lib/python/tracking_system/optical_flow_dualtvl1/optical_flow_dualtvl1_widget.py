@@ -40,7 +40,7 @@ class Widget(Ui_OpticalFlowDualTVL1_widget, QtWidgets.QWidget):
         return self.nObjectsSpinBox.value()
 
     def get_attributes(self):
-        return {'position':('x', 'y'), 'rect':False}
+        return {'position':('x', 'y'), 'rect':None}
 
     def track(self, original_img, filtered_img):
         n_objects = self.nObjectsSpinBox.value()
@@ -100,10 +100,10 @@ class Widget(Ui_OpticalFlowDualTVL1_widget, QtWidgets.QWidget):
         out = {
                 'position': res,
                 'rect': [
-                    {
-                        'topLeft': p-w/2.,
-                        'bottomRight': p+w/2.
-                        }
+                    [
+                        p-w/2.,
+                        p+w/2.
+                        ]
                     for p, w in zip(res, windows)
                     ]
                 }

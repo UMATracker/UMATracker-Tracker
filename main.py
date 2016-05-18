@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-import os, sys, six
+import os, sys, six, json, copy
 from itertools import chain
 
 if six.PY2:
@@ -51,13 +51,14 @@ tracking_system_path = ['lib', 'python', 'tracking_system']
 gen_init_py(tracking_system_path)
 
 from PyQt5 import QtCore, QtWidgets, QtGui
-from PyQt5.QtWidgets import QGraphicsScene, QGraphicsView, QGraphicsPixmapItem, QFrame, QFileDialog, QMainWindow, QProgressDialog, QGraphicsRectItem, QActionGroup
-from PyQt5.QtGui import QPixmap, QImage, QIcon
+from PyQt5.QtWidgets import QGraphicsScene, QGraphicsView, QGraphicsPixmapItem, QFrame, QFileDialog, QMainWindow, QProgressDialog, QGraphicsRectItem, QActionGroup, QGraphicsPathItem
+from PyQt5.QtGui import QPixmap, QImage, QIcon, QPainterPath, QPolygonF, QPen
 from PyQt5.QtCore import Qt, QRectF, QPointF, pyqtSignal, pyqtSlot, QEvent
 
 import cv2
 import numpy as np
 import pandas as pd
+import shapely
 
 import filePath
 
@@ -91,6 +92,16 @@ handler.setLevel(DEBUG)
 logger.setLevel(DEBUG)
 logger.addHandler(handler)
 
+def ndarray_to_list(l):
+    try:
+        return [[sub_item for sub_item in ndarray_to_list(item)] for item in iter(l)]
+    except TypeError:
+        if isinstance(l, np.ndarray):
+            return l.tolist()
+        else:
+            return l
+
+
 class Ui_MainWindow(QMainWindow, Ui_MainWindowBase):
     updateFrame = pyqtSignal()
 
@@ -118,12 +129,12 @@ class Ui_MainWindow(QMainWindow, Ui_MainWindowBase):
         self.filter = None
         self.filterIO = None
         self.isInitialized = False
-        self.rect_items = None
+        self.item_dict = {}
+        self.data_dict = {}
         self.trackingPathGroup = None
         self.df = None
         self.inputPixmapItem = None
         self.cv_img = None
-        self.arrow_items = None
         self.filePath = None
         self.savedFlag = True
 
@@ -168,10 +179,10 @@ class Ui_MainWindow(QMainWindow, Ui_MainWindowBase):
             return
 
     def arrowCheckBoxStateChanged(self, state):
-        if self.arrow_items is None:
+        if 'arrow' not in self.item_dict:
             return
 
-        for arrow_item in self.arrow_items:
+        for arrow_item in self.item_dict['arrow']:
             if state==Qt.Unchecked:
                 arrow_item.hide()
             if state==Qt.Checked:
@@ -191,10 +202,10 @@ class Ui_MainWindow(QMainWindow, Ui_MainWindowBase):
         self.updateInputGraphicsView()
 
     def reverseArrowColorCheckBoxStateChanged(self, state):
-        if self.arrow_items is None:
+        if 'arrow' not in self.item_dict:
             return
 
-        for arrow_item in self.arrow_items:
+        for arrow_item in self.item_dict['arrow']:
             if state==Qt.Unchecked:
                 arrow_item.setColor([0,0,0])
             if state==Qt.Checked:
@@ -247,7 +258,12 @@ class Ui_MainWindow(QMainWindow, Ui_MainWindowBase):
         self.menuAlgorithmsActionGroup = QActionGroup(self.menuAlgorithms)
         for module_path in get_modules(tracking_system_path):
             module_str = '.'.join(module_path)
-            module = importlib.import_module(module_str)
+
+            try:
+                module = importlib.import_module(module_str)
+            except Exception as e:
+                print('Tracking Lib. Load Fail: {}'.format(module_str))
+                print(e)
 
             if not hasattr(module, 'Widget'):
                 continue
@@ -381,6 +397,15 @@ class Ui_MainWindow(QMainWindow, Ui_MainWindowBase):
 
                     df.to_csv(filePath)
 
+            for k, v in self.data_dict.items():
+                path = os.path.join(dirctory, '{0}-{1}.json'.format(base_name, k))
+                filePath, _ = QFileDialog.getSaveFileName(None, 'Save JSON File', path, "JSON files (*.json)")
+
+                if len(filePath) is not 0:
+                    logger.debug("Saving JSON file: {0}".format(filePath))
+                    with open(filePath, 'w') as f_p:
+                        json.dump(v, f_p, sort_keys=True, indent=4)
+
             self.savedFlag = True
 
     def radiusSpinBoxValueChanged(self, i):
@@ -433,10 +458,42 @@ class Ui_MainWindow(QMainWindow, Ui_MainWindowBase):
             self.trackingPathGroup.setPoints(self.currentFrameNo)
 
         if 'arrow' in attrs:
-            for i, arrow_item in enumerate(self.arrow_items):
+            for i, arrow_item in enumerate(self.item_dict['arrow']):
                 begin = self.df.loc[self.currentFrameNo, (i, 'position')].as_matrix()
                 end = self.df.loc[self.currentFrameNo, (i, 'arrow')].as_matrix()
                 arrow_item.setPosition(begin, end)
+
+        if 'path' in attrs:
+            for path_item, path_data in zip(self.item_dict['path'], self.data_dict['path'][self.currentFrameNo]):
+                poly = QPolygonF()
+                for p in path_data:
+                    poly.append(QPointF(*p))
+
+                painter_path = QPainterPath()
+                painter_path.addPolygon(poly)
+                path_item.setPath(painter_path)
+
+                pen = QPen(Qt.blue)
+                pen.setWidth(2)
+                path_item.setPen(pen)
+
+        if 'polygon' in attrs:
+            for path_item, path_data in zip(self.item_dict['polygon'], self.data_dict['polygon'][self.currentFrameNo]):
+                poly = QPolygonF()
+                for p in path_data:
+                    poly.append(QPointF(*p))
+
+                painter_path = QPainterPath()
+                painter_path.addPolygon(poly)
+                path_item.setPath(painter_path)
+
+                pen = QPen(Qt.black)
+                pen.setWidth(1)
+                path_item.setPen(pen)
+
+        if 'rect' in attrs:
+            for rect_item, rect in zip(self.item_dict['rect'], self.data_dict['rect'][self.currentFrameNo]):
+                rect_item.setRect(QRectF(QPointF(*rect[0]), QPointF(*rect[1])))
 
     def resetDataframe(self):
         self.initializeTrackingSystem()
@@ -447,6 +504,11 @@ class Ui_MainWindow(QMainWindow, Ui_MainWindowBase):
             return
 
         self.df.loc[self.currentFrameNo+1:] = np.nan
+        for k in self.data_dict.keys():
+            for kk in self.data_dict[k]:
+                if kk>currentFrameNo:
+                    del self.data_dict[k]
+
         widget = self.stackedWidget.currentWidget()
 
         df = self.df.loc[self.currentFrameNo]
@@ -456,6 +518,10 @@ class Ui_MainWindow(QMainWindow, Ui_MainWindowBase):
         for i in mul_levs[0]:
             for key, value in kv.items():
                 value.append(df[i][key].as_matrix())
+
+        for k, v in self.data_dict.items():
+            kv[key] = v
+
         for key, value in kv.items():
             kv[key] = np.array(value)
         widget.reset_estimator(kv)
@@ -465,13 +531,21 @@ class Ui_MainWindow(QMainWindow, Ui_MainWindowBase):
             self.inputScene.removeItem(self.trackingPathGroup)
             self.trackingPathGroup = None
 
-        if self.rect_items is not None:
-            [self.inputScene.removeItem(item) for item in self.rect_items]
-            self.rect_items.clear()
+        if 'rect' in self.item_dict:
+            [self.inputScene.removeItem(item) for item in self.item_dict['rect']]
+            self.item_dict['rect'].clear()
 
-        if self.arrow_items is not None:
-            [self.inputScene.removeItem(item) for item in self.arrow_items]
-            self.arrow_items.clear()
+        if 'arrow' in self.item_dict:
+            [self.inputScene.removeItem(item) for item in self.item_dict['arrow']]
+            self.item_dict['arrow'].clear()
+
+        if 'path' in self.item_dict:
+            [self.inputScene.removeItem(item) for item in self.item_dict['path']]
+            self.item_dict['path'].clear()
+
+        if 'polygon' in self.item_dict:
+            [self.inputScene.removeItem(item) for item in self.item_dict['polygon']]
+            self.item_dict['polygon'].clear()
 
     def initializeTrackingSystem(self):
         self.isInitialized = False
@@ -495,7 +569,7 @@ class Ui_MainWindow(QMainWindow, Ui_MainWindowBase):
         tuples = []
         for i in range(tracking_n):
             for k, t in attrs.items():
-                if t==False:
+                if t is None:
                     continue
                 for v in t:
                     tuples.append((i, k, v))
@@ -522,18 +596,33 @@ class Ui_MainWindow(QMainWindow, Ui_MainWindowBase):
             self.trackingPathGroup.setItemsAreMovable(True)
 
         if 'rect' in attrs:
-            self.rect_items = [QGraphicsRectItem() for i in range(tracking_n)]
-            for rect_item in self.rect_items:
+            self.item_dict['rect'] = [QGraphicsRectItem() for i in range(tracking_n)]
+            self.data_dict['rect'] = {}
+            for rect_item in self.item_dict['rect']:
                 rect_item.setZValue(1000)
                 self.inputScene.addItem(rect_item)
 
         if 'arrow' in attrs:
-            self.arrow_items = [MovableArrow() for i in range(tracking_n)]
-            for arrow_item in self.arrow_items:
+            self.item_dict['arrow'] = [MovableArrow() for i in range(tracking_n)]
+            for arrow_item in self.item_dict['arrow']:
                 arrow_item.setZValue(900)
                 if self.arrowCheckBox.checkState()==Qt.Unchecked:
                     arrow_item.hide()
                 self.inputScene.addItem(arrow_item)
+
+        if 'path' in attrs:
+            self.item_dict['path'] = [QGraphicsPathItem() for i in range(tracking_n)]
+            self.data_dict['path'] = {}
+            for path_item in self.item_dict['path']:
+                path_item.setZValue(900)
+                self.inputScene.addItem(path_item)
+
+        if 'polygon' in attrs:
+            self.item_dict['polygon'] = [QGraphicsPathItem() for i in range(tracking_n)]
+            self.data_dict['polygon'] = {}
+            for path_item in self.item_dict['polygon']:
+                path_item.setZValue(900)
+                self.inputScene.addItem(path_item)
 
         self.videoPlaybackWidget.setMaxTickableFrameNo(0)
         # if self.currentFrameNo != 0:
@@ -547,10 +636,8 @@ class Ui_MainWindow(QMainWindow, Ui_MainWindowBase):
             return
 
         if self.df is not None and np.all(pd.notnull(self.df.loc[self.currentFrameNo])):
+            print('update')
             self.updatePath()
-            if self.rect_items is not None:
-                for rect_item in self.rect_items:
-                    rect_item.hide()
             self.updateInputGraphicsView()
             self.updateFrame.emit()
             return
@@ -560,6 +647,9 @@ class Ui_MainWindow(QMainWindow, Ui_MainWindowBase):
         attrs = self.stackedWidget.currentWidget().get_attributes()
 
         for k,v in res.items():
+            if k=='path' or k=='rect' or k=='polygon':
+                self.data_dict[k][self.currentFrameNo] = ndarray_to_list(v)
+                continue
             if not attrs[k]:
                 continue
             for i in range(len(v)):
@@ -569,11 +659,6 @@ class Ui_MainWindow(QMainWindow, Ui_MainWindowBase):
         self.savedFlag = False
 
         if update:
-            if 'rect' in res:
-                for rect_item, rect in zip(self.rect_items, res['rect']):
-                    rect_item.setRect(QRectF(QPointF(*rect['topLeft']), QPointF(*rect['bottomRight'])))
-                    rect_item.show()
-
             self.updatePath()
             self.updateInputGraphicsView()
             self.updateFrame.emit()
