@@ -25,40 +25,26 @@ import numpy as np
 import math
 
 import skeletonize2D
-
-from scipy.sparse import csr_matrix
-from scipy.sparse.csgraph import minimum_spanning_tree
+import itertools
 
 
 def get_longest_paths(nodes, graph):
-    """
-    Returns longest path of all possible paths between a list of nodes.
-    """
     paths = []
     distances = []
-    possible_paths = list(combinations(nodes, r=2))
-    for node1, node2 in possible_paths:
+    combinations = list(itertools.combinations(nodes, 2))
+    for node1, node2 in combinations:
         try:
             path = nx.shortest_path(graph, node1, node2, "weight")
         except:
             path = []
         if len(path)>1:
-            distance = get_path_distance(path, graph)
             paths.append(path)
-            distances.append(distance)
+            distances.append(get_path_distance(path, graph))
     paths_sorted = [x for (y,x) in sorted(zip(distances, paths), reverse=True)]
     return paths_sorted
 
 def get_path_distance(path, graph):
-    """
-    Returns weighted path distance.
-    """
-    distance = 0
-    for i,w in enumerate(path):
-        j=i+1
-        if j<len(path):
-            distance += round(graph.edge[path[i]][path[j]]["weight"], 6)
-    return distance
+    return np.sum([graph.edge[p1][p2]["weight"] for p1, p2 in zip(path[:-1], path[1:])])
 
 class Widget(Ui_group_tracker_widget, QtWidgets.QWidget):
     reset = pyqtSignal()
