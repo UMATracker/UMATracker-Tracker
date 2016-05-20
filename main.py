@@ -261,30 +261,38 @@ class Ui_MainWindow(QMainWindow, Ui_MainWindowBase):
 
             try:
                 module = importlib.import_module(module_str)
+
+                if not hasattr(module, 'Widget'):
+                    continue
+
+                class_def = getattr(module, "Widget")
+                if not issubclass(class_def, QtWidgets.QWidget):
+                    continue
+
+                widget = class_def(self.stackedWidget)
+                widget.reset.connect(self.resetDataframe)
+                widget.restart.connect(self.restartDataframe)
+                self.stackedWidget.addWidget(widget)
+
+                action = self.menuAlgorithms.addAction(widget.get_name())
+                action.triggered.connect(self.generateAlgorithmsMenuClicked(widget))
+                action.setCheckable(True)
+                action.setActionGroup(self.menuAlgorithmsActionGroup)
+
+                if len(self.menuAlgorithmsActionGroup.actions()) == 1:
+                    action.setChecked(True)
+                    self.algorithmSettingsGroupBox.setTitle(widget.get_name())
+
             except Exception as e:
-                print('Tracking Lib. Load Fail: {}'.format(module_str))
-                print(e)
-
-            if not hasattr(module, 'Widget'):
+                msg = 'Tracking Lib. Load Fail: {0}\n{1}'.format(module_str, e)
+                reply = QtWidgets.QMessageBox.critical(
+                        self,
+                        'Critical',
+                        msg,
+                        QtWidgets.QMessageBox.Ok,
+                        QtWidgets.QMessageBox.NoButton
+                        )
                 continue
-
-            class_def = getattr(module, "Widget")
-            if not issubclass(class_def, QtWidgets.QWidget):
-                continue
-
-            widget = class_def(self.stackedWidget)
-            widget.reset.connect(self.resetDataframe)
-            widget.restart.connect(self.restartDataframe)
-            self.stackedWidget.addWidget(widget)
-
-            action = self.menuAlgorithms.addAction(widget.get_name())
-            action.triggered.connect(self.generateAlgorithmsMenuClicked(widget))
-            action.setCheckable(True)
-            action.setActionGroup(self.menuAlgorithmsActionGroup)
-
-            if len(self.menuAlgorithmsActionGroup.actions()) == 1:
-                action.setChecked(True)
-                self.algorithmSettingsGroupBox.setTitle(widget.get_name())
 
     def openTrackingPathColorSelectorDialog(self, activated=False):
         if self.trackingPathGroup is not None:
@@ -425,6 +433,7 @@ class Ui_MainWindow(QMainWindow, Ui_MainWindowBase):
 
     def stackedWidgetCurrentChanged(self, i):
         currentWidget = self.stackedWidget.currentWidget()
+
         currentWidget.estimator_init()
         self.algorithmSettingsGroupBox.setTitle(currentWidget.get_name())
         self.resetDataframe()
@@ -452,7 +461,19 @@ class Ui_MainWindow(QMainWindow, Ui_MainWindowBase):
         self.inputGraphicsView.fitInView(self.inputScene.sceneRect(), QtCore.Qt.KeepAspectRatio)
 
     def updatePath(self):
-        attrs = self.stackedWidget.currentWidget().get_attributes()
+        try:
+            attrs = self.stackedWidget.currentWidget().get_attributes()
+            attrs.keys()
+        except Exception as e:
+            msg = 'Tracking Lib. Attributes Error:\n{}'.format(e)
+            reply = QtWidgets.QMessageBox.critical(
+                    self,
+                    'Critical',
+                    msg,
+                    QtWidgets.QMessageBox.Ok,
+                    QtWidgets.QMessageBox.NoButton
+                    )
+            return
 
         if 'position' in attrs:
             self.trackingPathGroup.setPoints(self.currentFrameNo)
@@ -509,8 +530,6 @@ class Ui_MainWindow(QMainWindow, Ui_MainWindowBase):
                 if kk>currentFrameNo:
                     del self.data_dict[k]
 
-        widget = self.stackedWidget.currentWidget()
-
         df = self.df.loc[self.currentFrameNo]
         mul_levs = df.index.levels
 
@@ -524,7 +543,19 @@ class Ui_MainWindow(QMainWindow, Ui_MainWindowBase):
 
         for key, value in kv.items():
             kv[key] = np.array(value)
-        widget.reset_estimator(kv)
+
+        try:
+            widget = self.stackedWidget.currentWidget()
+            widget.reset_estimator(kv)
+        except Exception as e:
+            msg = 'Tracking Lib. Reset Fail:\n{}'.format(e)
+            reply = QtWidgets.QMessageBox.critical(
+                    self,
+                    'Critical',
+                    msg,
+                    QtWidgets.QMessageBox.Ok,
+                    QtWidgets.QMessageBox.NoButton
+                    )
 
     def removeTrackingGraphicsItems(self):
         if self.trackingPathGroup is not None:
@@ -562,8 +593,21 @@ class Ui_MainWindow(QMainWindow, Ui_MainWindowBase):
         self.filter.fgbg = self.filterIO.getBackgroundImg()
         self.filter.isInit = True
 
-        tracking_n = self.stackedWidget.currentWidget().get_tracking_n()
-        attrs = self.stackedWidget.currentWidget().get_attributes()
+        try:
+            tracking_n = self.stackedWidget.currentWidget().get_tracking_n()
+            attrs = self.stackedWidget.currentWidget().get_attributes()
+            attrs.keys()
+        except Exception as e:
+            msg = 'Tracking Lib. Tracking N or attributes Error:\n{}'.format(e)
+            reply = QtWidgets.QMessageBox.critical(
+                    self,
+                    'Critical',
+                    msg,
+                    QtWidgets.QMessageBox.Ok,
+                    QtWidgets.QMessageBox.NoButton
+                    )
+            return
+
         max_frame_pos = self.videoPlaybackWidget.getMaxFramePos()
 
         tuples = []
@@ -643,8 +687,21 @@ class Ui_MainWindow(QMainWindow, Ui_MainWindowBase):
             return
 
         img = self.filter.filterFunc(self.cv_img.copy())
-        res = self.stackedWidget.currentWidget().track(self.cv_img.copy(), img)
-        attrs = self.stackedWidget.currentWidget().get_attributes()
+
+        try:
+            widget = self.stackedWidget.currentWidget()
+            res = widget.track(self.cv_img.copy(), img)
+            attrs = widget.get_attributes()
+        except Exception as e:
+            msg = 'Tracking Lib. Tracking method Fail:\n{}'.format(e)
+            reply = QtWidgets.QMessageBox.critical(
+                    self,
+                    'Critical',
+                    msg,
+                    QtWidgets.QMessageBox.Ok,
+                    QtWidgets.QMessageBox.NoButton
+                    )
+            return
 
         for k,v in res.items():
             if k=='path' or k=='rect' or k=='polygon':
