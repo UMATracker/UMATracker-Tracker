@@ -20,7 +20,7 @@ elif __file__:
 
 import pkgutil, importlib
 
-def gen_init_py(root):
+def gen_init_py(root, currentDirPath=currentDirPath):
     root = os.path.join(*([currentDirPath,] + root))
     finit = '__init__.py'
 
@@ -37,10 +37,10 @@ def gen_init_py(root):
         with open(os.path.join(dirname, finit), 'w+') as init_py_file:
             init_py_file.write('__all__ = {0}'.format(fnames))
 
-def get_modules(root):
+def get_modules(root, currentDirPath=currentDirPath):
     for _, name, is_package in pkgutil.walk_packages([os.path.join(*([currentDirPath,] + root))]):
         if is_package:
-            for module in get_modules(root + [name,]):
+            for module in get_modules(root + [name,], currentDirPath):
                 yield module
         else:
             yield root + [name]
@@ -49,6 +49,12 @@ def get_modules(root):
 sys.path.append(currentDirPath)
 tracking_system_path = ['lib', 'python', 'tracking_system']
 gen_init_py(tracking_system_path)
+
+user_defined_lib_path = os.path.join(os.path.expanduser("~"), 'uma')
+if os.path.exists(user_defined_lib_path):
+    sys.path.append(user_defined_lib_path)
+    user_defined_tracking_system_path = ['tracking_system']
+    gen_init_py(user_defined_tracking_system_path, user_defined_lib_path)
 
 from PyQt5 import QtCore, QtWidgets, QtGui
 from PyQt5.QtWidgets import QGraphicsScene, QGraphicsView, QGraphicsPixmapItem, QFrame, QFileDialog, QMainWindow, QProgressDialog, QGraphicsRectItem, QActionGroup, QGraphicsPathItem
@@ -256,37 +262,43 @@ class Ui_MainWindow(QMainWindow, Ui_MainWindowBase):
         self.actionTrackingPathColor.triggered.connect(self.openTrackingPathColorSelectorDialog)
 
         self.menuAlgorithmsActionGroup = QActionGroup(self.menuAlgorithms)
-        for module_path in get_modules(tracking_system_path):
-            module_str = '.'.join(module_path)
 
-            try:
-                module = importlib.import_module(module_str)
+        path_list = [[tracking_system_path, currentDirPath], ]
+        if os.path.exists(user_defined_lib_path):
+            path_list.append([user_defined_tracking_system_path, user_defined_lib_path])
+        for system_path in path_list:
+            for module_path in get_modules(system_path[0], system_path[1]):
+                module_str = '.'.join(module_path)
 
-                if not hasattr(module, 'Widget'):
+                try:
+                    module = importlib.import_module(module_str)
+
+                    if not hasattr(module, 'Widget'):
+                        continue
+
+                    class_def = getattr(module, "Widget")
+                    if not issubclass(class_def, QtWidgets.QWidget):
+                        continue
+
+                    widget = class_def(self.stackedWidget)
+                    widget.reset.connect(self.resetDataframe)
+                    widget.restart.connect(self.restartDataframe)
+                    self.stackedWidget.addWidget(widget)
+
+                    action = self.menuAlgorithms.addAction(widget.get_name())
+                    action.triggered.connect(self.generateAlgorithmsMenuClicked(widget))
+                    action.setCheckable(True)
+                    action.setActionGroup(self.menuAlgorithmsActionGroup)
+
+                    if len(self.menuAlgorithmsActionGroup.actions()) == 1:
+                        action.setChecked(True)
+                        self.algorithmSettingsGroupBox.setTitle(widget.get_name())
+
+                except Exception as e:
+                    if system_path[1] is user_defined_lib_path:
+                        msg = 'Tracking Lib. Load Fail: {0}\n{1}'.format(module_str, e)
+                        self.generateCriticalMessage(msg)
                     continue
-
-                class_def = getattr(module, "Widget")
-                if not issubclass(class_def, QtWidgets.QWidget):
-                    continue
-
-                widget = class_def(self.stackedWidget)
-                widget.reset.connect(self.resetDataframe)
-                widget.restart.connect(self.restartDataframe)
-                self.stackedWidget.addWidget(widget)
-
-                action = self.menuAlgorithms.addAction(widget.get_name())
-                action.triggered.connect(self.generateAlgorithmsMenuClicked(widget))
-                action.setCheckable(True)
-                action.setActionGroup(self.menuAlgorithmsActionGroup)
-
-                if len(self.menuAlgorithmsActionGroup.actions()) == 1:
-                    action.setChecked(True)
-                    self.algorithmSettingsGroupBox.setTitle(widget.get_name())
-
-            except Exception as e:
-                msg = 'Tracking Lib. Load Fail: {0}\n{1}'.format(module_str, e)
-                generateCriticalMessage(msg)
-                continue
 
     def openTrackingPathColorSelectorDialog(self, activated=False):
         if self.trackingPathGroup is not None:
@@ -460,7 +472,7 @@ class Ui_MainWindow(QMainWindow, Ui_MainWindowBase):
             attrs.keys()
         except Exception as e:
             msg = 'Tracking Lib. Attributes Error:\n{}'.format(e)
-            generateCriticalMessage(msg)
+            self.generateCriticalMessage(msg)
             return
 
         if 'position' in attrs:
@@ -537,7 +549,7 @@ class Ui_MainWindow(QMainWindow, Ui_MainWindowBase):
             widget.reset_estimator(kv)
         except Exception as e:
             msg = 'Tracking Lib. Reset Fail:\n{}'.format(e)
-            generateCriticalMessage(msg)
+            self.generateCriticalMessage(msg)
 
     def removeTrackingGraphicsItems(self):
         if self.trackingPathGroup is not None:
@@ -581,7 +593,7 @@ class Ui_MainWindow(QMainWindow, Ui_MainWindowBase):
             attrs.keys()
         except Exception as e:
             msg = 'Tracking Lib. Tracking N or attributes Error:\n{}'.format(e)
-            generateCriticalMessage(msg)
+            self.generateCriticalMessage(msg)
             return
 
         max_frame_pos = self.videoPlaybackWidget.getMaxFramePos()
@@ -670,7 +682,7 @@ class Ui_MainWindow(QMainWindow, Ui_MainWindowBase):
             attrs = widget.get_attributes()
         except Exception as e:
             msg = 'Tracking Lib. Tracking method Fail:\n{}'.format(e)
-            generateCriticalMessage(msg)
+            self.generateCriticalMessage(msg)
             return
 
         for k,v in res.items():
@@ -724,6 +736,9 @@ class Ui_MainWindow(QMainWindow, Ui_MainWindowBase):
         return False
 
     def generateCriticalMessage(self, msg):
+        tb = sys.exc_info()[-1]
+        f = tb.tb_frame
+        msg = 'File name: {0}\nLine No: {1}\n'.format(f.f_code.co_filename, tb.tb_lineno) + msg
         reply = QtWidgets.QMessageBox.critical(
                 self,
                 'Critical',
