@@ -285,13 +285,7 @@ class Ui_MainWindow(QMainWindow, Ui_MainWindowBase):
 
             except Exception as e:
                 msg = 'Tracking Lib. Load Fail: {0}\n{1}'.format(module_str, e)
-                reply = QtWidgets.QMessageBox.critical(
-                        self,
-                        'Critical',
-                        msg,
-                        QtWidgets.QMessageBox.Ok,
-                        QtWidgets.QMessageBox.NoButton
-                        )
+                generateCriticalMessage(msg)
                 continue
 
     def openTrackingPathColorSelectorDialog(self, activated=False):
@@ -466,13 +460,7 @@ class Ui_MainWindow(QMainWindow, Ui_MainWindowBase):
             attrs.keys()
         except Exception as e:
             msg = 'Tracking Lib. Attributes Error:\n{}'.format(e)
-            reply = QtWidgets.QMessageBox.critical(
-                    self,
-                    'Critical',
-                    msg,
-                    QtWidgets.QMessageBox.Ok,
-                    QtWidgets.QMessageBox.NoButton
-                    )
+            generateCriticalMessage(msg)
             return
 
         if 'position' in attrs:
@@ -549,13 +537,7 @@ class Ui_MainWindow(QMainWindow, Ui_MainWindowBase):
             widget.reset_estimator(kv)
         except Exception as e:
             msg = 'Tracking Lib. Reset Fail:\n{}'.format(e)
-            reply = QtWidgets.QMessageBox.critical(
-                    self,
-                    'Critical',
-                    msg,
-                    QtWidgets.QMessageBox.Ok,
-                    QtWidgets.QMessageBox.NoButton
-                    )
+            generateCriticalMessage(msg)
 
     def removeTrackingGraphicsItems(self):
         if self.trackingPathGroup is not None:
@@ -599,13 +581,7 @@ class Ui_MainWindow(QMainWindow, Ui_MainWindowBase):
             attrs.keys()
         except Exception as e:
             msg = 'Tracking Lib. Tracking N or attributes Error:\n{}'.format(e)
-            reply = QtWidgets.QMessageBox.critical(
-                    self,
-                    'Critical',
-                    msg,
-                    QtWidgets.QMessageBox.Ok,
-                    QtWidgets.QMessageBox.NoButton
-                    )
+            generateCriticalMessage(msg)
             return
 
         max_frame_pos = self.videoPlaybackWidget.getMaxFramePos()
@@ -694,13 +670,7 @@ class Ui_MainWindow(QMainWindow, Ui_MainWindowBase):
             attrs = widget.get_attributes()
         except Exception as e:
             msg = 'Tracking Lib. Tracking method Fail:\n{}'.format(e)
-            reply = QtWidgets.QMessageBox.critical(
-                    self,
-                    'Critical',
-                    msg,
-                    QtWidgets.QMessageBox.Ok,
-                    QtWidgets.QMessageBox.NoButton
-                    )
+            generateCriticalMessage(msg)
             return
 
         for k,v in res.items():
@@ -752,6 +722,16 @@ class Ui_MainWindow(QMainWindow, Ui_MainWindowBase):
                 return True
 
         return False
+
+    def generateCriticalMessage(self, msg):
+        reply = QtWidgets.QMessageBox.critical(
+                self,
+                'Critical',
+                msg,
+                QtWidgets.QMessageBox.Ok,
+                QtWidgets.QMessageBox.NoButton
+                )
+        return reply
 
 if __name__ == "__main__":
     app = QtWidgets.QApplication(sys.argv)
