@@ -10,6 +10,7 @@ import math
 import vapoursynth as vs
 
 import sys
+from enum import Enum
 from PyQt5 import QtWidgets, QtCore
 from PyQt5.QtWidgets import QStyle
 from PyQt5.QtCore import pyqtSignal, pyqtSlot, QThread
@@ -69,6 +70,10 @@ elif os.name == 'posix':  # FIXME:Linuxだと落ちる．
             break
 
 
+class PlaybackMode(Enum):
+    Timer = 0
+    SignalSlot = 1
+
 class VideoPlaybackWidget(QtWidgets.QWidget, Ui_VideoPlaybackWidget):
     frameChanged = pyqtSignal(np.ndarray, int)
 
@@ -107,8 +112,18 @@ class VideoPlaybackWidget(QtWidgets.QWidget, Ui_VideoPlaybackWidget):
         self.maxTickableFrameNo = 0
         self.playFlag = False
 
+        self.mode = PlaybackMode.Timer
+
         self.playbackTimer = QtCore.QTimer()
         self.playbackTimer.timeout.connect(self.videoPlayback)
+
+    def setTimerMode(self):
+        self.stop()
+        self.mode = PlaybackMode.Timer
+
+    def setSignalSlotMode(self):
+        self.stop()
+        self.mode = PlaybackMode.SignalSlot
 
     def copySource(self, videoPlaybackWidget):
         self.ret = videoPlaybackWidget.ret
@@ -130,6 +145,7 @@ class VideoPlaybackWidget(QtWidgets.QWidget, Ui_VideoPlaybackWidget):
         ret, frame = self.readFrame(0)
         if ret:
             self.currentFrameNo = 0
+            self.setMaxTickableFrameNo(self.getMaxFramePos())
             self.frameChanged.emit(frame, 0)
             return True
         else:
@@ -195,16 +211,21 @@ class VideoPlaybackWidget(QtWidgets.QWidget, Ui_VideoPlaybackWidget):
     def start(self, interval):
         qApp = QtWidgets.qApp
         self.playButton.setIcon(qApp.style().standardIcon(QStyle.SP_MediaPause))
-        # self.playbackTimer.setInterval(interval)
-        # self.playbackTimer.start()
+
+        if self.mode is PlaybackMode.Timer:
+            self.playbackTimer.setInterval(interval)
+            self.playbackTimer.start()
+
         self.playFlag = True
 
         self.videoPlayback()
 
 
     def isPlaying(self):
-        return self.playFlag
-        # return self.playbackTimer.isActive()
+        if self.mode is PlaybackMode.SignalSlot:
+            return self.playFlag
+        else:
+            return self.playbackTimer.isActive()
 
     def isOpened(self):
         return self.ret is not None
@@ -408,6 +429,12 @@ class VideoPlaybackWidget(QtWidgets.QWidget, Ui_VideoPlaybackWidget):
         self.timeLabel.setText('{:,d}/{:,d}'.format(n, self.getMaxFramePos()))
         self.currentFrameNo = n
         self.playbackSlider.valueChanged.connect(self.playbackSliderValueChanged)
+
+    def getFPS(self):
+        if self.ret is None:
+            return None
+
+        return self.ret.fps_num/self.ret.fps_den
 
     def getVideoInfo(self):
         if self.ret is None:

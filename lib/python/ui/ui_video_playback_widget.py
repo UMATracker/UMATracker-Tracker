@@ -93,7 +93,7 @@ class Ui_VideoPlaybackWidget(object):
         self.moveLastButton.setObjectName("moveLastButton")
         self.ff.addWidget(self.moveLastButton)
         self.horizontalLayout_2.addWidget(self.buttonFrame)
-        self.playbackSlider = QtWidgets.QSlider(self.frame)
+        self.playbackSlider = ColorRangeSlider(self.frame)
         sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Maximum)
         sizePolicy.setHorizontalStretch(0)
         sizePolicy.setVerticalStretch(0)
@@ -120,3 +120,8 @@ class Ui_VideoPlaybackWidget(object):
         _translate = QtCore.QCoreApplication.translate
         VideoPlaybackWidget.setWindowTitle(_translate("VideoPlaybackWidget", "Form"))
 
+
+try:
+    from color_range_slider import ColorRangeSlider
+except ImportError:
+    from .color_range_slider import ColorRangeSlider

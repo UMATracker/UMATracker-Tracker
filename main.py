@@ -130,6 +130,7 @@ class Ui_MainWindow(QMainWindow, Ui_MainWindowBase):
 
         self.opaqueCheckBox.stateChanged.connect(self.opaqueCheckBoxStateChanged)
 
+        self.videoPlaybackWidget.setSignalSlotMode()
         self.updateFrame.connect(self.videoPlaybackWidget.videoPlayback)
 
         self.filter = None
