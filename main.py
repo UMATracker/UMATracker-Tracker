@@ -184,7 +184,7 @@ class Ui_MainWindow(QMainWindow, Ui_MainWindowBase):
             return
 
     def arrowCheckBoxStateChanged(self, state):
-        if 'arrow' not in self.item_dict:
+        if 'arrow' not in self.item_dict.keys():
             return
 
         for arrow_item in self.item_dict['arrow']:
@@ -207,7 +207,7 @@ class Ui_MainWindow(QMainWindow, Ui_MainWindowBase):
         self.updateInputGraphicsView()
 
     def reverseArrowColorCheckBoxStateChanged(self, state):
-        if 'arrow' not in self.item_dict:
+        if 'arrow' not in self.item_dict.keys():
             return
 
         for arrow_item in self.item_dict['arrow']:
@@ -400,7 +400,7 @@ class Ui_MainWindow(QMainWindow, Ui_MainWindowBase):
                 if len(filePath) is not 0:
                     logger.debug("Saving CSV file: {0}".format(filePath))
 
-                    row_max = self.videoPlaybackWidget.getMaxTickableFrameNo()
+                    row_max = self.currentFrameNo
                     df = df.loc[:row_max]
                     levels = df.columns.levels
                     col = ['{0}{1}'.format(l,i) for i in levels[0] for l in levels[1]]
@@ -562,7 +562,7 @@ class Ui_MainWindow(QMainWindow, Ui_MainWindowBase):
             self.inputScene.removeItem(self.trackingPathGroup)
             self.trackingPathGroup = None
 
-        for k, v in self.item_dict:
+        for k, v in self.item_dict.items():
             [self.inputScene.removeItem(item) for item in v]
             v.clear()
 
@@ -596,6 +596,7 @@ class Ui_MainWindow(QMainWindow, Ui_MainWindowBase):
         for k, t in attrs.items():
             if t is None:
                 self.data_dict[k] = {}
+                self.data_dict[k]['name'] = k
             else:
                 tuples = []
                 for i in range(tracking_n):
@@ -603,6 +604,7 @@ class Ui_MainWindow(QMainWindow, Ui_MainWindowBase):
                         tuples.append((i, v))
                 col = pd.MultiIndex.from_tuples(tuples)
                 self.df[k] = pd.DataFrame(index=range(max_frame_pos+1), columns=col, dtype=np.float64).sort_index().sort_index(axis=1)
+                self.df[k].index.name = k
 
         self.removeTrackingGraphicsItems()
 
