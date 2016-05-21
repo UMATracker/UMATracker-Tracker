@@ -684,7 +684,6 @@ class Ui_MainWindow(QMainWindow, Ui_MainWindowBase):
             if not attrs[k]:
                 continue
             for i in range(len(v)):
-                print(self.df[k].loc[self.currentFrameNo, i] , v[i])
                 self.df[k].loc[self.currentFrameNo, i] = v[i]
 
         self.videoPlaybackWidget.setMaxTickableFrameNo(self.currentFrameNo+self.videoPlaybackWidget.playbackDelta)
