@@ -148,7 +148,6 @@ class Ui_MainWindow(QMainWindow, Ui_MainWindowBase):
         event.acceptProposedAction()
 
     def dropEvent(self,event):
-        # event.setDropAction(QtCore.Qt.MoveAction)
         mime = event.mimeData()
         if mime.hasUrls():
             urls = mime.urls()
@@ -229,7 +228,6 @@ class Ui_MainWindow(QMainWindow, Ui_MainWindowBase):
             self.trackingPathGroup.setOpacity(1.0)
 
         self.updateInputGraphicsView()
-
 
     def reset(self):
         self.videoPlaybackWidget.stop()
@@ -564,21 +562,9 @@ class Ui_MainWindow(QMainWindow, Ui_MainWindowBase):
             self.inputScene.removeItem(self.trackingPathGroup)
             self.trackingPathGroup = None
 
-        if 'rect' in self.item_dict:
-            [self.inputScene.removeItem(item) for item in self.item_dict['rect']]
-            self.item_dict['rect'].clear()
-
-        if 'arrow' in self.item_dict:
-            [self.inputScene.removeItem(item) for item in self.item_dict['arrow']]
-            self.item_dict['arrow'].clear()
-
-        if 'path' in self.item_dict:
-            [self.inputScene.removeItem(item) for item in self.item_dict['path']]
-            self.item_dict['path'].clear()
-
-        if 'polygon' in self.item_dict:
-            [self.inputScene.removeItem(item) for item in self.item_dict['polygon']]
-            self.item_dict['polygon'].clear()
+        for k, v in self.item_dict:
+            [self.inputScene.removeItem(item) for item in v]
+            v.clear()
 
     def initializeTrackingSystem(self):
         self.isInitialized = False
