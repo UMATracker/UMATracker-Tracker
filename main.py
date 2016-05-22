@@ -416,7 +416,7 @@ class Ui_MainWindow(QMainWindow, Ui_MainWindowBase):
                 if len(filePath) is not 0:
                     logger.debug("Saving JSON file: {0}".format(filePath))
                     with open(filePath, 'w') as f_p:
-                        json.dump(v, f_p, sort_keys=True, indent=4)
+                        json.dump(v, f_p, indent=4)
 
             path = os.path.join(dirctory, '{0}-colors.color'.format(base_name))
             filePath, _ = QFileDialog.getSaveFileName(None, 'Save Color File', path, "Color files (*.color)")
