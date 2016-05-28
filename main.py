@@ -130,6 +130,7 @@ class Ui_MainWindow(QMainWindow, Ui_MainWindowBase):
 
         self.opaqueCheckBox.stateChanged.connect(self.opaqueCheckBoxStateChanged)
 
+        self.videoPlaybackWidget.setSignalSlotMode()
         self.updateFrame.connect(self.videoPlaybackWidget.videoPlayback)
 
         self.filter = None
@@ -138,7 +139,7 @@ class Ui_MainWindow(QMainWindow, Ui_MainWindowBase):
         self.item_dict = {}
         self.data_dict = {}
         self.trackingPathGroup = None
-        self.df = None
+        self.df = {}
         self.inputPixmapItem = None
         self.cv_img = None
         self.filePath = None
@@ -148,7 +149,6 @@ class Ui_MainWindow(QMainWindow, Ui_MainWindowBase):
         event.acceptProposedAction()
 
     def dropEvent(self,event):
-        # event.setDropAction(QtCore.Qt.MoveAction)
         mime = event.mimeData()
         if mime.hasUrls():
             urls = mime.urls()
@@ -158,7 +158,7 @@ class Ui_MainWindow(QMainWindow, Ui_MainWindowBase):
         event.acceptProposedAction()
 
     def closeEvent(self, event):
-        if self.df is None or self.savedFlag:
+        if len(self.df.keys())==0 or self.savedFlag:
             return
 
         quit_msg = "Data is not saved.\nAre you sure you want to exit the program?"
@@ -185,7 +185,7 @@ class Ui_MainWindow(QMainWindow, Ui_MainWindowBase):
             return
 
     def arrowCheckBoxStateChanged(self, state):
-        if 'arrow' not in self.item_dict:
+        if 'arrow' not in self.item_dict.keys():
             return
 
         for arrow_item in self.item_dict['arrow']:
@@ -208,7 +208,7 @@ class Ui_MainWindow(QMainWindow, Ui_MainWindowBase):
         self.updateInputGraphicsView()
 
     def reverseArrowColorCheckBoxStateChanged(self, state):
-        if 'arrow' not in self.item_dict:
+        if 'arrow' not in self.item_dict.keys():
             return
 
         for arrow_item in self.item_dict['arrow']:
@@ -229,7 +229,6 @@ class Ui_MainWindow(QMainWindow, Ui_MainWindowBase):
             self.trackingPathGroup.setOpacity(1.0)
 
         self.updateInputGraphicsView()
-
 
     def reset(self):
         self.videoPlaybackWidget.stop()
@@ -382,7 +381,7 @@ class Ui_MainWindow(QMainWindow, Ui_MainWindowBase):
             self.evaluate()
 
     def saveCSVFile(self, activated=False, filePath = None):
-        if self.df is not None:
+        if len(self.df.keys())!=0:
             dirctory = os.path.dirname(self.filePath)
             base_name = os.path.splitext(os.path.basename(self.filePath))[0]
 
@@ -395,18 +394,17 @@ class Ui_MainWindow(QMainWindow, Ui_MainWindowBase):
                 with open(filePath, 'w') as fp:
                     fp.write(self.videoPlaybackWidget.getVideoInfo())
 
-            levels = self.df.columns.levels
-            for attr in levels[1]:
+            for attr, df in self.df.items():
                 path = os.path.join(dirctory, '{0}-{1}.csv'.format(base_name, attr))
                 filePath, _ = QFileDialog.getSaveFileName(None, 'Save CSV File', path, "CSV files (*.csv)")
 
                 if len(filePath) is not 0:
                     logger.debug("Saving CSV file: {0}".format(filePath))
 
-                    row_max = self.videoPlaybackWidget.getMaxTickableFrameNo()
-                    # df = self.df[pd.notnull(self.df).any(axis=1)].loc[:,(slice(None),attr)]
-                    df = self.df.loc[:row_max,(slice(None),attr)]
-                    col = ['{0}{1}'.format(l,i) for i in levels[0] for l in levels[2]]
+                    row_max = self.currentFrameNo
+                    df = df.loc[:row_max]
+                    levels = df.columns.levels
+                    col = ['{0}{1}'.format(l,i) for i in levels[0] for l in levels[1]]
                     df.columns = col
 
                     df.to_csv(filePath)
@@ -418,7 +416,13 @@ class Ui_MainWindow(QMainWindow, Ui_MainWindowBase):
                 if len(filePath) is not 0:
                     logger.debug("Saving JSON file: {0}".format(filePath))
                     with open(filePath, 'w') as f_p:
-                        json.dump(v, f_p, sort_keys=True, indent=4)
+                        json.dump(v, f_p)
+
+            path = os.path.join(dirctory, '{0}-colors.color'.format(base_name))
+            filePath, _ = QFileDialog.getSaveFileName(None, 'Save Color File', path, "Color files (*.color)")
+            if len(filePath) is not 0:
+                logger.debug("Saving Color file: {0}".format(filePath))
+                self.trackingPathGroup.saveColors(filePath)
 
             self.savedFlag = True
 
@@ -480,8 +484,8 @@ class Ui_MainWindow(QMainWindow, Ui_MainWindowBase):
 
         if 'arrow' in attrs:
             for i, arrow_item in enumerate(self.item_dict['arrow']):
-                begin = self.df.loc[self.currentFrameNo, (i, 'position')].as_matrix()
-                end = self.df.loc[self.currentFrameNo, (i, 'arrow')].as_matrix()
+                begin = self.df['position'].loc[self.currentFrameNo, i].as_matrix()
+                end = self.df['arrow'].loc[self.currentFrameNo, i].as_matrix()
                 arrow_item.setPosition(begin, end)
 
         if 'path' in attrs:
@@ -521,22 +525,25 @@ class Ui_MainWindow(QMainWindow, Ui_MainWindowBase):
         self.evaluate()
 
     def restartDataframe(self):
-        if self.df is None:
+        if len(self.df.keys())==0:
             return
 
-        self.df.loc[self.currentFrameNo+1:] = np.nan
+        for attr in self.df.keys():
+            self.df[attr].loc[self.currentFrameNo+1:] = np.nan
         for k in self.data_dict.keys():
             for kk in self.data_dict[k]:
                 if kk>currentFrameNo:
                     del self.data_dict[k]
 
-        df = self.df.loc[self.currentFrameNo]
-        mul_levs = df.index.levels
+        df = {}
+        for attr in self.df.keys():
+            df[attr] = self.df[attr].loc[self.currentFrameNo]
 
-        kv = {k:[] for k in mul_levs[1]}
-        for i in mul_levs[0]:
-            for key, value in kv.items():
-                value.append(df[i][key].as_matrix())
+        kv = {k:[] for k in self.df.keys()}
+        for key, value in kv.items():
+            mul_levs = df[key].index.levels
+            for i in mul_levs[0]:
+                value.append(df[key][i].as_matrix())
 
         for k, v in self.data_dict.items():
             kv[key] = v
@@ -556,21 +563,9 @@ class Ui_MainWindow(QMainWindow, Ui_MainWindowBase):
             self.inputScene.removeItem(self.trackingPathGroup)
             self.trackingPathGroup = None
 
-        if 'rect' in self.item_dict:
-            [self.inputScene.removeItem(item) for item in self.item_dict['rect']]
-            self.item_dict['rect'].clear()
-
-        if 'arrow' in self.item_dict:
-            [self.inputScene.removeItem(item) for item in self.item_dict['arrow']]
-            self.item_dict['arrow'].clear()
-
-        if 'path' in self.item_dict:
-            [self.inputScene.removeItem(item) for item in self.item_dict['path']]
-            self.item_dict['path'].clear()
-
-        if 'polygon' in self.item_dict:
-            [self.inputScene.removeItem(item) for item in self.item_dict['polygon']]
-            self.item_dict['polygon'].clear()
+        for k, v in self.item_dict.items():
+            [self.inputScene.removeItem(item) for item in v]
+            v.clear()
 
     def initializeTrackingSystem(self):
         self.isInitialized = False
@@ -598,16 +593,19 @@ class Ui_MainWindow(QMainWindow, Ui_MainWindowBase):
 
         max_frame_pos = self.videoPlaybackWidget.getMaxFramePos()
 
-        tuples = []
-        for i in range(tracking_n):
-            for k, t in attrs.items():
-                if t is None:
-                    continue
-                for v in t:
-                    tuples.append((i, k, v))
-
-        col = pd.MultiIndex.from_tuples(tuples)
-        self.df = pd.DataFrame(index=range(max_frame_pos+1), columns=col, dtype=np.float64).sort_index().sort_index(axis=1)
+        self.df = {}
+        for k, t in attrs.items():
+            if t is None:
+                self.data_dict[k] = {}
+                self.data_dict[k]['name'] = k
+            else:
+                tuples = []
+                for i in range(tracking_n):
+                    for v in t:
+                        tuples.append((i, v))
+                col = pd.MultiIndex.from_tuples(tuples)
+                self.df[k] = pd.DataFrame(index=range(max_frame_pos+1), columns=col, dtype=np.float64).sort_index().sort_index(axis=1)
+                self.df[k].index.name = k
 
         self.removeTrackingGraphicsItems()
 
@@ -618,7 +616,7 @@ class Ui_MainWindow(QMainWindow, Ui_MainWindowBase):
                 self.trackingPathGroup.hide()
 
             self.inputScene.addItem(self.trackingPathGroup)
-            self.trackingPathGroup.setDataFrame(self.df)
+            self.trackingPathGroup.setDataFrame(self.df['position'])
 
             lw = self.trackingPathGroup.autoAdjustLineWidth(self.cv_img.shape)
             r = self.trackingPathGroup.autoAdjustRadius(self.cv_img.shape)
@@ -629,7 +627,6 @@ class Ui_MainWindow(QMainWindow, Ui_MainWindowBase):
 
         if 'rect' in attrs:
             self.item_dict['rect'] = [QGraphicsRectItem() for i in range(tracking_n)]
-            self.data_dict['rect'] = {}
             for rect_item in self.item_dict['rect']:
                 rect_item.setZValue(1000)
                 self.inputScene.addItem(rect_item)
@@ -644,14 +641,12 @@ class Ui_MainWindow(QMainWindow, Ui_MainWindowBase):
 
         if 'path' in attrs:
             self.item_dict['path'] = [QGraphicsPathItem() for i in range(tracking_n)]
-            self.data_dict['path'] = {}
             for path_item in self.item_dict['path']:
                 path_item.setZValue(900)
                 self.inputScene.addItem(path_item)
 
         if 'polygon' in attrs:
             self.item_dict['polygon'] = [QGraphicsPathItem() for i in range(tracking_n)]
-            self.data_dict['polygon'] = {}
             for path_item in self.item_dict['polygon']:
                 path_item.setZValue(900)
                 self.inputScene.addItem(path_item)
@@ -667,7 +662,7 @@ class Ui_MainWindow(QMainWindow, Ui_MainWindowBase):
         if not self.isInitialized:
             return
 
-        if self.df is not None and np.all(pd.notnull(self.df.loc[self.currentFrameNo])):
+        if len(self.df.keys())!=0 and np.all([np.all(pd.notnull(df.loc[self.currentFrameNo])) for df in self.df.values()]):
             print('update')
             self.updatePath()
             self.updateInputGraphicsView()
@@ -692,7 +687,7 @@ class Ui_MainWindow(QMainWindow, Ui_MainWindowBase):
             if not attrs[k]:
                 continue
             for i in range(len(v)):
-                self.df.loc[self.currentFrameNo, (i, k)] = v[i]
+                self.df[k].loc[self.currentFrameNo, i] = v[i]
 
         self.videoPlaybackWidget.setMaxTickableFrameNo(self.currentFrameNo+self.videoPlaybackWidget.playbackDelta)
         self.savedFlag = False

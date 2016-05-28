@@ -18,6 +18,7 @@ class TrackingPathGroup(QGraphicsObject):
         self.drawLineFlag = True
         self.areItemsMovable = False
         self.df = None
+        self.colors = None
         self.itemList = []
         self.selectedItemList = []
         self.rect = QRectF()
@@ -79,8 +80,8 @@ class TrackingPathGroup(QGraphicsObject):
 
     def swap(self):
         pos0, pos1 = [self.itemList.index(item) for item in self.selectedItemList]
-        array0 = self.df.loc[self.currentFrameNo:, (pos0,'position')].as_matrix()
-        array1 = self.df.loc[self.currentFrameNo:, (pos1,'position')].as_matrix()
+        array0 = self.df.loc[self.currentFrameNo:, pos0].as_matrix()
+        array1 = self.df.loc[self.currentFrameNo:, pos1].as_matrix()
 
         tmp = array0.copy()
         array0[:, :] = array1
@@ -131,7 +132,7 @@ class TrackingPathGroup(QGraphicsObject):
 
         for i, item in enumerate(self.itemList):
             # TODO: 内部データ表現を再考する必要あり．
-            array = self.df.loc[min_value:max_value, (i,'position')].as_matrix()
+            array = self.df.loc[min_value:max_value, i].as_matrix()
             if pos not in range(len(array)):
                 pos = None
 
@@ -182,7 +183,30 @@ class TrackingPathGroup(QGraphicsObject):
         dialog.colorChanged.connect(self.changeTrackingPathColor)
         dialog.show()
 
+    def saveColors(self, f_name):
+        if self.colors is None:
+            return False
+
+        colors = [[color.red(), color.green(), color.blue()] for color in self.colors]
+        df = pd.DataFrame(colors, columns=['red', 'green', 'blue'])
+        df.to_csv(f_name)
+
+        return True
+
+    def loadColors(self, f_name):
+        df = pd.read_csv(f_name)
+
+        if self.colors is None or len(self.df.index)==len(self.colors):
+            self.colors = [QColor(row['red'], row['green'], row['blue']) for index, row in df.iterrows()]
+
+            for item, color in zip(self.itemList, self.colors):
+                item.setColor(color)
+
+        return True
+
+
     @pyqtSlot(int, QColor)
     def changeTrackingPathColor(self, i, color):
         self.colors[i] = color
         self.itemList[i].setColor(color)
+
