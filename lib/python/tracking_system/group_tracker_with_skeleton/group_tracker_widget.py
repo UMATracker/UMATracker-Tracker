@@ -117,7 +117,10 @@ class Widget(Ui_group_tracker_widget, QtWidgets.QWidget):
                 ch = np.array(ch_poly.exterior.coords)
             elif ch_poly.type == 'MultiPolygon':
                 try:
-                    ch = np.array(cascaded_union(ch_poly.buffer(5)).exterior.coords)
+                    new_poly = cascaded_union(ch_poly.buffer(10).buffer(-10))
+                    if new_poly.type == 'MultiPolygon':
+                        new_poly = new_poly[np.argmax([poly.area for poly in new_poly])]
+                    ch = np.array(new_poly.exterior.coords)
                 except:
                     ch = self.prev_contours[i]
 
