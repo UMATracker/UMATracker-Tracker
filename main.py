@@ -530,10 +530,13 @@ class Ui_MainWindow(QMainWindow, Ui_MainWindowBase):
 
         for attr in self.df.keys():
             self.df[attr].loc[self.currentFrameNo+1:] = np.nan
-        for k in self.data_dict.keys():
-            for kk in self.data_dict[k]:
-                if kk>currentFrameNo:
-                    del self.data_dict[k]
+
+        for k in list(self.data_dict.keys()):
+            for kk in list(self.data_dict[k].keys()):
+                if kk=='name':
+                    continue
+                elif int(kk)>self.currentFrameNo:
+                    del self.data_dict[k][kk]
 
         df = {}
         for attr in self.df.keys():
@@ -545,14 +548,14 @@ class Ui_MainWindow(QMainWindow, Ui_MainWindowBase):
             for i in mul_levs[0]:
                 value.append(df[key][i].as_matrix())
 
-        for k, v in self.data_dict.items():
-            kv[key] = v
-
-        for key, value in kv.items():
             kv[key] = np.array(value)
+
+        for key, value in self.data_dict.items():
+            kv[key] = [np.array(v) for v in value[self.currentFrameNo]]
 
         try:
             widget = self.stackedWidget.currentWidget()
+            print(kv)
             widget.reset_estimator(kv)
         except Exception as e:
             msg = 'Tracking Lib. Reset Fail:\n{}'.format(e)
