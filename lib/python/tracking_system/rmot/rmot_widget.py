@@ -33,6 +33,7 @@ class Widget(Ui_RMOT_widget, QtWidgets.QWidget):
     def estimator_init(self):
         self.rmot = None
         self.k_means = None
+        self.res = None
 
     def reset_estimator(self, kv):
         center_pos = kv['position']
@@ -49,6 +50,7 @@ class Widget(Ui_RMOT_widget, QtWidgets.QWidget):
                     windows
                     ), axis=1)
         self.rmot = RMOT(xs)
+        self.res = center_pos.copy()
 
     def get_name(self):
         return 'RMOT'
@@ -69,7 +71,14 @@ class Widget(Ui_RMOT_widget, QtWidgets.QWidget):
             self.k_means = cluster.KMeans(n_clusters=n_k_means, max_iter=10000)
 
         non_zero_pos = np.transpose(np.nonzero(filtered_img.T))
-        center_pos = self.k_means.fit(non_zero_pos).cluster_centers_
+
+        try:
+            center_pos = self.k_means.fit(non_zero_pos).cluster_centers_
+        except:
+            if self.res is not None:
+                center_pos = self.res
+            else:
+                center_pos = np.zeros((n_objects,2))
 
         windows = np.zeros(center_pos.shape)
         windows[:] = self.windowHeightSpinBox.value()

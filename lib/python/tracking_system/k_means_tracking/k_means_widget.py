@@ -68,7 +68,7 @@ class Widget(Ui_Kmeans_widget, QtWidgets.QWidget):
             self.ret_pos[:] = self.ret_pos_old[:]
             self.ret_pos[idx[:, 0], :] = center_pos[idx[:, 1], :]
 
-            self.ret_pos_old[:] = self.ret_pos[:]
+            self.ret_pos_old[:] = self.ret_pos[:].copy()
 
         return {'position': self.ret_pos}
 
