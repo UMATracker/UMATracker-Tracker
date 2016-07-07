@@ -555,7 +555,6 @@ class Ui_MainWindow(QMainWindow, Ui_MainWindowBase):
 
         try:
             widget = self.stackedWidget.currentWidget()
-            print(kv)
             widget.reset_estimator(kv)
         except Exception as e:
             msg = 'Tracking Lib. Reset Fail:\n{}'.format(e)
