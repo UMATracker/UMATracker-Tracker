@@ -724,6 +724,10 @@ class Ui_MainWindow(QMainWindow, Ui_MainWindowBase):
         progress.setValue(numFrames)
 
     def eventFilter(self, obj, event):
+        if event.type() == QEvent.Wheel:
+            self.videoPlaybackWidget.playbackSlider.wheelEvent(event)
+            return True
+        
         if event.type() == QEvent.KeyPress:
             print(event.key())
             if Qt.Key_Home <= event.key() <= Qt.Key_PageDown:
