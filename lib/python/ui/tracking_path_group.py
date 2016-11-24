@@ -47,7 +47,7 @@ class TrackingPathGroup(QGraphicsObject):
         self.itemList = []
         self.selectedItemList = []
         self.rect = QRectF()
-        self.drawMarkItem = False
+        self.drawMarkItemFlag = False
 
         self.num_items = 0
         self.currentFrameNo = 0
@@ -83,7 +83,7 @@ class TrackingPathGroup(QGraphicsObject):
 
             trackingPath.setDrawItem(self.drawItemFlag)
             trackingPath.setDrawLine(self.drawLineFlag)
-            trackingPath.setDrawMarkItem(self.drawMarkItem)
+            trackingPath.setDrawMarkItem(self.drawMarkItemFlag)
 
             self.itemList.append(trackingPath)
 
@@ -135,7 +135,7 @@ class TrackingPathGroup(QGraphicsObject):
             item.setDrawItem(flag)
 
     def setDrawMarkItem(self, flag):
-        self.drawMarkItem = flag
+        self.drawMarkItemFlag = flag
         for item in self.itemList:
             item.setDrawMarkItem(flag)
 
