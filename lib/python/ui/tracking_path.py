@@ -141,8 +141,12 @@ class TrackingPath(QGraphicsObject):
                     self.item.setRect(rect)
                     self.setItemIsMovable(self.isItemMovable)
 
-                elif self.drawItemFlag:
+                if self.drawItemFlag:
                     self.item.show()
+                    self.textItem.show()
+                else:
+                    self.item.hide()
+                    self.textItem.hide()
 
                 self.item.setPos(*point)
                 self.item.mouseMoveEvent = self.generateItemMouseMoveEvent(self.item, point)

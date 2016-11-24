@@ -10,6 +10,31 @@ import numpy as np
 import pandas as pd
 
 class TrackingPathGroup(QGraphicsObject):
+    kelly_colors = [
+        '#F2F3F4',
+        '#222222',
+        '#F3C300',
+        '#875692',
+        '#F38400',
+        '#A1CAF1',
+        '#BE0032',
+        '#C2B280',
+        '#848482',
+        '#008856',
+        '#E68FAC',
+        '#0067A5',
+        '#F99379',
+        '#604E97',
+        '#F6A600',
+        '#B3446C',
+        '#DCD300',
+        '#882D17',
+        '#8DB600',
+        '#654522',
+        '#E25822',
+        '#2B3D26'
+        ]
+    
     def __init__(self, parent=None):
         super(TrackingPathGroup, self).__init__(parent)
 
@@ -22,6 +47,7 @@ class TrackingPathGroup(QGraphicsObject):
         self.itemList = []
         self.selectedItemList = []
         self.rect = QRectF()
+        self.drawMarkItem = False
 
         self.num_items = 0
         self.currentFrameNo = 0
@@ -33,8 +59,13 @@ class TrackingPathGroup(QGraphicsObject):
         self.df = df
         shape = self.df.shape
 
-        self.colors = np.random.randint(0, 255, (len(self.df.columns.levels[0]), 3)).tolist()
-        self.colors = [QColor(*rgb) for rgb in self.colors]
+        path_n = len(self.df.columns.levels[0])
+
+        if path_n <= 22:
+            self.colors = [QColor(TrackingPathGroup.kelly_colors[i]) for i in range(path_n)]
+        else:
+            self.colors = np.random.randint(0, 255, (path_n, 3)).tolist()
+            self.colors = [QColor(*rgb) for rgb in self.colors]
 
         scene = self.scene()
         if scene is not None:
@@ -49,6 +80,10 @@ class TrackingPathGroup(QGraphicsObject):
             trackingPath.setColor(rgb)
             trackingPath.itemSelected.connect(self.itemSelected)
             trackingPath.setText(str(i))
+
+            trackingPath.setDrawItem(self.drawItemFlag)
+            trackingPath.setDrawLine(self.drawLineFlag)
+            trackingPath.setDrawMarkItem(self.drawMarkItem)
 
             self.itemList.append(trackingPath)
 
@@ -100,6 +135,7 @@ class TrackingPathGroup(QGraphicsObject):
             item.setDrawItem(flag)
 
     def setDrawMarkItem(self, flag):
+        self.drawMarkItem = flag
         for item in self.itemList:
             item.setDrawMarkItem(flag)
 
@@ -209,4 +245,10 @@ class TrackingPathGroup(QGraphicsObject):
     def changeTrackingPathColor(self, i, color):
         self.colors[i] = color
         self.itemList[i].setColor(color)
+        self.update()
 
+    def setColors(self, colors):
+        self.colors = colors
+        for rgb, item in zip(self.colors, self.itemList):
+            item.setColor(rgb)
+        self.update()
