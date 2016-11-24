@@ -41,13 +41,13 @@ class TrackingPathGroup(QGraphicsObject):
         self.setZValue(10)
         self.drawItemFlag = True
         self.drawLineFlag = True
+        self.drawMarkItemFlag = False
         self.areItemsMovable = False
         self.df = None
         self.colors = None
         self.itemList = []
         self.selectedItemList = []
         self.rect = QRectF()
-        self.drawMarkItemFlag = False
 
         self.num_items = 0
         self.currentFrameNo = 0
