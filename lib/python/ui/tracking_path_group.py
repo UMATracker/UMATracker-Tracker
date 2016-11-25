@@ -2,12 +2,15 @@ from .tracking_path import TrackingPath
 from .color_selector_dialog import ColorSelectorDialog
 
 from PyQt5 import QtCore, QtWidgets
-from PyQt5.QtWidgets import QGraphicsScene, QGraphicsView, QGraphicsItem, QGraphicsItemGroup, QGraphicsPixmapItem, QGraphicsEllipseItem, QFrame, QFileDialog, QPushButton, QGraphicsObject, QMenu, QAction
+from PyQt5.QtWidgets import QGraphicsScene, QGraphicsView, QGraphicsItem,\
+    QGraphicsItemGroup, QGraphicsPixmapItem, QGraphicsEllipseItem, QFrame,\
+    QFileDialog, QPushButton, QGraphicsObject, QMenu, QAction
 from PyQt5.QtGui import QPixmap, QImage, QPainter, QPolygonF, QColor
 from PyQt5.QtCore import QPoint, QPointF, QRectF, pyqtSlot, QObject
 
 import numpy as np
 import pandas as pd
+
 
 class TrackingPathGroup(QGraphicsObject):
     kelly_colors = [
@@ -34,7 +37,7 @@ class TrackingPathGroup(QGraphicsObject):
         '#E25822',
         '#2B3D26'
         ]
-    
+
     def __init__(self, parent=None):
         super(TrackingPathGroup, self).__init__(parent)
 
@@ -61,8 +64,11 @@ class TrackingPathGroup(QGraphicsObject):
 
         path_n = len(self.df.columns.levels[0])
 
-        if path_n <= 22:
-            self.colors = [QColor(TrackingPathGroup.kelly_colors[i]) for i in range(path_n)]
+        if path_n <= len(TrackingPathGroup.kelly_colors):
+            self.colors = [
+                QColor(TrackingPathGroup.kelly_colors[i])
+                for i in range(path_n)
+                ]
         else:
             self.colors = np.random.randint(0, 255, (path_n, 3)).tolist()
             self.colors = [QColor(*rgb) for rgb in self.colors]
@@ -91,7 +97,7 @@ class TrackingPathGroup(QGraphicsObject):
     def itemSelected(self, item):
         if item.selected:
             self.selectedItemList.append(item)
-            if len(self.selectedItemList)>2:
+            if len(self.selectedItemList) > 2:
                 removedItem = self.selectedItemList.pop(0)
                 removedItem.selected = False
                 removedItem.itemType = QGraphicsEllipseItem
@@ -114,7 +120,10 @@ class TrackingPathGroup(QGraphicsObject):
             menu.exec(event.screenPos())
 
     def swap(self):
-        pos0, pos1 = [self.itemList.index(item) for item in self.selectedItemList]
+        pos0, pos1 = [
+            self.itemList.index(item)
+            for item in self.selectedItemList
+            ]
         array0 = self.df.loc[self.currentFrameNo:, pos0].as_matrix()
         array1 = self.df.loc[self.currentFrameNo:, pos1].as_matrix()
 
@@ -223,7 +232,10 @@ class TrackingPathGroup(QGraphicsObject):
         if self.colors is None:
             return False
 
-        colors = [[color.red(), color.green(), color.blue()] for color in self.colors]
+        colors = [
+            [color.red(), color.green(), color.blue()]
+            for color in self.colors
+            ]
         df = pd.DataFrame(colors, columns=['red', 'green', 'blue'])
         df.to_csv(f_name)
 
@@ -232,14 +244,16 @@ class TrackingPathGroup(QGraphicsObject):
     def loadColors(self, f_name):
         df = pd.read_csv(f_name)
 
-        if self.colors is None or len(self.df.index)==len(self.colors):
-            self.colors = [QColor(row['red'], row['green'], row['blue']) for index, row in df.iterrows()]
+        if self.colors is None or len(self.df.index) == len(self.colors):
+            self.colors = [
+                QColor(row['red'], row['green'], row['blue'])
+                for index, row in df.iterrows()
+                ]
 
             for item, color in zip(self.itemList, self.colors):
                 item.setColor(color)
 
         return True
-
 
     @pyqtSlot(int, QColor)
     def changeTrackingPathColor(self, i, color):

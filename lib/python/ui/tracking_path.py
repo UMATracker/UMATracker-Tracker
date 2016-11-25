@@ -1,9 +1,13 @@
 from .graphics_text_item_with_background import GraphicsTextItemWithBackground
 
 from PyQt5 import QtCore, QtWidgets
-from PyQt5.QtWidgets import QGraphicsScene, QGraphicsView, QGraphicsItem, QGraphicsTextItem, QGraphicsItemGroup, QGraphicsPixmapItem, QGraphicsEllipseItem, QGraphicsRectItem, QFrame, QFileDialog, QPushButton, QGraphicsObject
+from PyQt5.QtWidgets import QGraphicsScene, QGraphicsView, QGraphicsItem,\
+    QGraphicsTextItem, QGraphicsItemGroup, QGraphicsPixmapItem,\
+    QGraphicsEllipseItem, QGraphicsRectItem, QFrame, QFileDialog, QPushButton,\
+    QGraphicsObject
 from PyQt5.QtSvg import QGraphicsSvgItem
-from PyQt5.QtGui import QPixmap, QImage, QPainter, QPolygonF, QColor, QPen, QTransform
+from PyQt5.QtGui import QPixmap, QImage, QPainter, QPolygonF, QColor, QPen,\
+    QTransform
 from PyQt5.QtCore import QPoint, QPointF, QRectF, Qt, pyqtSignal, QObject
 
 import numpy as np
@@ -23,7 +27,7 @@ class TrackingPath(QGraphicsObject):
         self.lineWidth = 1.0
         self.itemList = []
         self.rect = QRectF()
-        self.color = QColor(255,0,0)
+        self.color = QColor(255, 0, 0)
 
         self.setOpacity(0.5)
         # self.setHandlesChildEvents(False)
@@ -87,12 +91,11 @@ class TrackingPath(QGraphicsObject):
 
     def setDrawMarkItem(self, flag):
         self.drawMarkItemFlag = flag
-        if flag:
-            for markItem, markTextItem in zip(self.markItemList, self.markTextItemList):
+        for markItem, markTextItem in zip(self.markItemList, self.markTextItemList):
+            if flag:
                 markItem.show()
                 markTextItem.show()
-        else:
-            for markItem, markTextItem in zip(self.markItemList, self.markTextItemList):
+            else:
                 markItem.hide()
                 markTextItem.hide()
 
