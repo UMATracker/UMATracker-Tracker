@@ -173,15 +173,22 @@ class TrackingPathGroup(QGraphicsObject):
             self.currentFrameNo = frameNo
         min_value = max(self.currentFrameNo - self.overlayFrameNo, 0)
         max_value = self.currentFrameNo + self.overlayFrameNo
-        pos = self.currentFrameNo - min_value
+        # pos = self.currentFrameNo
 
         for i, item in enumerate(self.itemList):
             # TODO: 内部データ表現を再考する必要あり．
-            array = self.df.loc[min_value:max_value, i].as_matrix()
-            if pos not in range(len(array)):
-                pos = None
+            df = self.df.loc[min_value:max_value, i]
+            array = df.as_matrix()
+            index = df.index.values.tolist()
 
-            item.setPoints(array, pos)
+            pos = None
+
+            try:
+                pos = index.index(self.currentFrameNo)
+            except ValueError:
+                pass
+
+            item.setPoints(array, pos, index)
 
     def getRadius(self):
         return self.radius

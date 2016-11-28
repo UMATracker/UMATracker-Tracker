@@ -42,6 +42,8 @@ class TrackingPath(QGraphicsObject):
 
         self.points = None
 
+        self.index = None
+
         self.itemType = QGraphicsEllipseItem
         self.item = self.itemType(self)
         self.item.setZValue(10)
@@ -117,9 +119,10 @@ class TrackingPath(QGraphicsObject):
     def getRadius(self):
         return self.radius
 
-    def setPoints(self, ps, itemPos):
+    def setPoints(self, ps, itemPos, index):
         self.points = ps
         self.itemPos = itemPos
+        self.index = index
 
         self.updateLine()
 
@@ -160,8 +163,14 @@ class TrackingPath(QGraphicsObject):
             else:
                 self.item.hide()
 
-            prev_range = range(self.itemPos, -1, -self.markDelta)[1:]
-            next_range = range(self.itemPos, len(self.points), self.markDelta)[1:]
+            index_set = set(self.index)
+
+            prev_range = range(self.index[self.itemPos], self.index[0] - self.markDelta, -self.markDelta)[1:]
+            prev_range = sorted(list(index_set.intersection(prev_range)))
+
+            next_range = range(self.index[self.itemPos], self.index[-1] + self.markDelta, self.markDelta)[1:]
+            next_range = sorted(list(index_set.intersection(next_range)))
+
             num_mark = len(prev_range) + len(next_range)
 
             rect_half = QRectF(-self.radius/2, -self.radius/2, diameter/2, diameter/2)
@@ -202,10 +211,10 @@ class TrackingPath(QGraphicsObject):
                 self.markTextItemList.append(markTextItem)
 
             for markItem, markTextItem, index in zip(self.markItemList, self.markTextItemList, chain(prev_range, next_range)):
-                markItem.setPos(*self.points[index])
+                markItem.setPos(*self.points[self.index.index(index)])
 
-                markTextItem.setPos(*self.points[index])
-                markTextItem.setPlainText(str(int((index-self.itemPos)/self.markDelta)))
+                markTextItem.setPos(*self.points[self.index.index(index)])
+                markTextItem.setPlainText(str(int((index-self.index[self.itemPos])/self.markDelta)))
 
                 if self.drawMarkItemFlag:
                     markItem.show()
