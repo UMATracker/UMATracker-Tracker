@@ -1,9 +1,13 @@
 from .graphics_text_item_with_background import GraphicsTextItemWithBackground
 
 from PyQt5 import QtCore, QtWidgets
-from PyQt5.QtWidgets import QGraphicsScene, QGraphicsView, QGraphicsItem, QGraphicsTextItem, QGraphicsItemGroup, QGraphicsPixmapItem, QGraphicsEllipseItem, QGraphicsRectItem, QFrame, QFileDialog, QPushButton, QGraphicsObject
+from PyQt5.QtWidgets import QGraphicsScene, QGraphicsView, QGraphicsItem,\
+    QGraphicsTextItem, QGraphicsItemGroup, QGraphicsPixmapItem,\
+    QGraphicsEllipseItem, QGraphicsRectItem, QFrame, QFileDialog, QPushButton,\
+    QGraphicsObject
 from PyQt5.QtSvg import QGraphicsSvgItem
-from PyQt5.QtGui import QPixmap, QImage, QPainter, QPolygonF, QColor, QPen, QTransform
+from PyQt5.QtGui import QPixmap, QImage, QPainter, QPolygonF, QColor, QPen,\
+    QTransform
 from PyQt5.QtCore import QPoint, QPointF, QRectF, Qt, pyqtSignal, QObject
 
 import numpy as np
@@ -23,7 +27,7 @@ class TrackingPath(QGraphicsObject):
         self.lineWidth = 1.0
         self.itemList = []
         self.rect = QRectF()
-        self.color = QColor(255,0,0)
+        self.color = QColor(255, 0, 0)
 
         self.setOpacity(0.5)
         # self.setHandlesChildEvents(False)
@@ -37,6 +41,8 @@ class TrackingPath(QGraphicsObject):
         self.itemPos = None
 
         self.points = None
+
+        self.index = None
 
         self.itemType = QGraphicsEllipseItem
         self.item = self.itemType(self)
@@ -87,12 +93,11 @@ class TrackingPath(QGraphicsObject):
 
     def setDrawMarkItem(self, flag):
         self.drawMarkItemFlag = flag
-        if flag:
-            for markItem, markTextItem in zip(self.markItemList, self.markTextItemList):
+        for markItem, markTextItem in zip(self.markItemList, self.markTextItemList):
+            if flag:
                 markItem.show()
                 markTextItem.show()
-        else:
-            for markItem, markTextItem in zip(self.markItemList, self.markTextItemList):
+            else:
                 markItem.hide()
                 markTextItem.hide()
 
@@ -114,9 +119,10 @@ class TrackingPath(QGraphicsObject):
     def getRadius(self):
         return self.radius
 
-    def setPoints(self, ps, itemPos):
+    def setPoints(self, ps, itemPos, index):
         self.points = ps
         self.itemPos = itemPos
+        self.index = index
 
         self.updateLine()
 
@@ -141,8 +147,12 @@ class TrackingPath(QGraphicsObject):
                     self.item.setRect(rect)
                     self.setItemIsMovable(self.isItemMovable)
 
-                elif self.drawItemFlag:
+                if self.drawItemFlag:
                     self.item.show()
+                    self.textItem.show()
+                else:
+                    self.item.hide()
+                    self.textItem.hide()
 
                 self.item.setPos(*point)
                 self.item.mouseMoveEvent = self.generateItemMouseMoveEvent(self.item, point)
@@ -153,8 +163,14 @@ class TrackingPath(QGraphicsObject):
             else:
                 self.item.hide()
 
-            prev_range = range(self.itemPos, -1, -self.markDelta)[1:]
-            next_range = range(self.itemPos, len(self.points), self.markDelta)[1:]
+            index_set = set(self.index)
+
+            prev_range = range(self.index[self.itemPos], self.index[0] - self.markDelta, -self.markDelta)[1:]
+            prev_range = sorted(list(index_set.intersection(prev_range)))
+
+            next_range = range(self.index[self.itemPos], self.index[-1] + self.markDelta, self.markDelta)[1:]
+            next_range = sorted(list(index_set.intersection(next_range)))
+
             num_mark = len(prev_range) + len(next_range)
 
             rect_half = QRectF(-self.radius/2, -self.radius/2, diameter/2, diameter/2)
@@ -195,10 +211,10 @@ class TrackingPath(QGraphicsObject):
                 self.markTextItemList.append(markTextItem)
 
             for markItem, markTextItem, index in zip(self.markItemList, self.markTextItemList, chain(prev_range, next_range)):
-                markItem.setPos(*self.points[index])
+                markItem.setPos(*self.points[self.index.index(index)])
 
-                markTextItem.setPos(*self.points[index])
-                markTextItem.setPlainText(str(int((index-self.itemPos)/self.markDelta)))
+                markTextItem.setPos(*self.points[self.index.index(index)])
+                markTextItem.setPlainText(str(int((index-self.index[self.itemPos])/self.markDelta)))
 
                 if self.drawMarkItemFlag:
                     markItem.show()

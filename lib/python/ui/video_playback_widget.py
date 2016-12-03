@@ -220,7 +220,6 @@ class VideoPlaybackWidget(QtWidgets.QWidget, Ui_VideoPlaybackWidget):
 
         self.videoPlayback()
 
-
     def isPlaying(self):
         if self.mode is PlaybackMode.SignalSlot:
             return self.playFlag
@@ -422,6 +421,7 @@ class VideoPlaybackWidget(QtWidgets.QWidget, Ui_VideoPlaybackWidget):
         self.playbackDelta = delta
         self.playbackSlider.setSingleStep(delta)
         self.playbackSlider.setPageStep(delta)
+        self.playbackSlider.setTickInterval(delta)
 
     def setSliderValueWithoutSignal(self, n):
         self.playbackSlider.valueChanged.disconnect()
@@ -450,6 +450,28 @@ FPS Numerator: {1}
 FPS Denominator: {2}
 FPS: {3}
 """.format(self.ret.format, num, den, num/den)
+
+    def wheelEvent(self, e):
+        wheel_move_horiz = e.angleDelta().x()
+        wheel_move_vert = e.angleDelta().y()
+        wheel_move = None
+
+        if wheel_move_horiz == 0:
+            wheel_move = wheel_move_vert
+        elif wheel_move_vert == 0:
+            wheel_move = wheel_move_horiz
+
+        if wheel_move is not None:
+            if wheel_move > 0:
+                self.moveNextButtonClicked()
+            elif wheel_move < 0:
+                self.movePrevButtonClicked()
+
+        e.accept()
+
+    def keyPressEvent(self, e):
+        self.playbackSlider.keyPressEvent(e)
+
 
 if __name__ == "__main__":
     app = QtWidgets.QApplication(sys.argv)

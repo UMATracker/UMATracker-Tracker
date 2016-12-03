@@ -402,7 +402,7 @@ class Ui_MainWindow(QMainWindow, Ui_MainWindowBase):
                     logger.debug("Saving CSV file: {0}".format(filePath))
 
                     row_max = self.currentFrameNo
-                    df = df.loc[:row_max]
+                    df = df.loc[:row_max].copy().dropna()
                     levels = df.columns.levels
                     col = ['{0}{1}'.format(l,i) for i in levels[0] for l in levels[1]]
                     df.columns = col
@@ -606,7 +606,11 @@ class Ui_MainWindow(QMainWindow, Ui_MainWindowBase):
                     for v in t:
                         tuples.append((i, v))
                 col = pd.MultiIndex.from_tuples(tuples)
-                self.df[k] = pd.DataFrame(index=range(max_frame_pos+1), columns=col, dtype=np.float64).sort_index().sort_index(axis=1)
+                self.df[k] = pd.DataFrame(
+                    index=range(0, max_frame_pos+1, self.playbackDeltaSpinBox.value()),
+                    columns=col,
+                    dtype=np.float64
+                    ).sort_index().sort_index(axis=1)
                 self.df[k].index.name = k
 
         self.removeTrackingGraphicsItems()
@@ -622,6 +626,7 @@ class Ui_MainWindow(QMainWindow, Ui_MainWindowBase):
 
             lw = self.trackingPathGroup.autoAdjustLineWidth(self.cv_img.shape)
             r = self.trackingPathGroup.autoAdjustRadius(self.cv_img.shape)
+            self.trackingPathGroup.setOverlayFrameNo(self.overlayFrameNoSpinBox.value())
             self.lineWidthSpinBox.setValue(lw)
             self.radiusSpinBox.setValue(r)
 
@@ -691,7 +696,11 @@ class Ui_MainWindow(QMainWindow, Ui_MainWindowBase):
             for i in range(len(v)):
                 self.df[k].loc[self.currentFrameNo, i] = v[i]
 
-        self.videoPlaybackWidget.setMaxTickableFrameNo(self.currentFrameNo+self.videoPlaybackWidget.playbackDelta)
+        maxTickableFrameNo = self.currentFrameNo+self.videoPlaybackWidget.playbackDelta
+        if maxTickableFrameNo > self.videoPlaybackWidget.getMaxFramePos():
+            maxTickableFrameNo = self.currentFrameNo
+
+        self.videoPlaybackWidget.setMaxTickableFrameNo(maxTickableFrameNo)
         self.savedFlag = False
 
         if update:
@@ -725,13 +734,12 @@ class Ui_MainWindow(QMainWindow, Ui_MainWindowBase):
 
     def eventFilter(self, obj, event):
         if event.type() == QEvent.Wheel:
-            self.videoPlaybackWidget.playbackSlider.wheelEvent(event)
+            self.videoPlaybackWidget.wheelEvent(event)
             return True
         
         if event.type() == QEvent.KeyPress:
-            print(event.key())
             if Qt.Key_Home <= event.key() <= Qt.Key_PageDown:
-                self.videoPlaybackWidget.playbackSlider.keyPressEvent(event)
+                self.videoPlaybackWidget.keyPressEvent(event)
                 return True
 
         return False
