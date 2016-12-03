@@ -294,10 +294,11 @@ class Ui_MainWindow(QMainWindow, Ui_MainWindowBase):
                         self.algorithmSettingsGroupBox.setTitle(widget.get_name())
 
                 except Exception as e:
+                    msg = 'Tracking Lib. Load Fail: {0}\n{1}'.format(module_str, e)
                     if system_path[1] is user_defined_lib_path:
-                        msg = 'Tracking Lib. Load Fail: {0}\n{1}'.format(module_str, e)
                         self.generateCriticalMessage(msg)
-                    continue
+                    else:
+                        logger.debug(msg)
 
     def openTrackingPathColorSelectorDialog(self, activated=False):
         if self.trackingPathGroup is not None:
@@ -498,9 +499,16 @@ class Ui_MainWindow(QMainWindow, Ui_MainWindowBase):
                 painter_path.addPolygon(poly)
                 path_item.setPath(painter_path)
 
-                pen = QPen(Qt.blue)
+                pen = QPen(Qt.red)
                 pen.setWidth(2)
                 path_item.setPen(pen)
+
+            for i in range(len(self.data_dict['path'][self.currentFrameNo]), len(self.item_dict['path'])):
+                path_item = self.item_dict['path'][i]
+                poly = QPolygonF()
+                painter_path = QPainterPath()
+                painter_path.addPolygon(poly)
+                path_item.setPath(painter_path)
 
         if 'polygon' in attrs:
             for path_item, path_data in zip(self.item_dict['polygon'], self.data_dict['polygon'][self.currentFrameNo]):
@@ -647,7 +655,7 @@ class Ui_MainWindow(QMainWindow, Ui_MainWindowBase):
                 self.inputScene.addItem(arrow_item)
 
         if 'path' in attrs:
-            self.item_dict['path'] = [QGraphicsPathItem() for i in range(tracking_n)]
+            self.item_dict['path'] = [QGraphicsPathItem() for i in range(1000)]
             for path_item in self.item_dict['path']:
                 path_item.setZValue(900)
                 self.inputScene.addItem(path_item)
