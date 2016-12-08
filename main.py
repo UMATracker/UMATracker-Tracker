@@ -655,7 +655,7 @@ class Ui_MainWindow(QMainWindow, Ui_MainWindowBase):
                 self.inputScene.addItem(arrow_item)
 
         if 'path' in attrs:
-            self.item_dict['path'] = [QGraphicsPathItem() for i in range(1000)]
+            self.item_dict['path'] = [QGraphicsPathItem() for i in range(3000)]
             for path_item in self.item_dict['path']:
                 path_item.setZValue(900)
                 self.inputScene.addItem(path_item)
