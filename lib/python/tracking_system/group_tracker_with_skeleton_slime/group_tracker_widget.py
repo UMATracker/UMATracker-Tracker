@@ -114,10 +114,10 @@ class Widget(Ui_group_tracker_widget, QtWidgets.QWidget):
             ch_vtx_list = skeletonize2D.get_concave_hull(p_data.astype(np.int32))
             ch_poly = unary_union(list(polygonize(geometry.MultiLineString(ch_vtx_list))))
             if ch_poly.type == 'Polygon':
-                ch = np.array(ch_poly.exterior.coords)
+                ch = np.array(ch_poly.buffer(5).buffer(-4).exterior.coords)
             elif ch_poly.type == 'MultiPolygon':
                 try:
-                    new_poly = cascaded_union(ch_poly.buffer(10).buffer(-10))
+                    new_poly = cascaded_union(ch_poly.buffer(5).buffer(-4))
                     if new_poly.type == 'MultiPolygon':
                         new_poly = new_poly[np.argmax([poly.area for poly in new_poly])]
                     ch = np.array(new_poly.exterior.coords)
@@ -125,10 +125,13 @@ class Widget(Ui_group_tracker_widget, QtWidgets.QWidget):
                     ch = self.prev_contours[i]
 
             self.prev_contours[i] = ch
+            print(ch)
 
             edges, vertices = skeletonize2D.get_skeleton_from_polygon(ch.astype(np.float64))
+            print('end')
             for e in edges:
                 skeletons.append(vertices[list(e)[:2], :])
+
             # G=nx.Graph()
             # G.add_weighted_edges_from(edges)
 
