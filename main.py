@@ -482,6 +482,7 @@ class Ui_MainWindow(QMainWindow, Ui_MainWindowBase):
 
         if 'position' in attrs:
             self.trackingPathGroup.setPoints(self.currentFrameNo)
+            self.trackingPathGroup.hide()
 
         if 'arrow' in attrs:
             for i, arrow_item in enumerate(self.item_dict['arrow']):
@@ -520,8 +521,8 @@ class Ui_MainWindow(QMainWindow, Ui_MainWindowBase):
                 painter_path.addPolygon(poly)
                 path_item.setPath(painter_path)
 
-                pen = QPen(Qt.black)
-                pen.setWidth(1)
+                pen = QPen(Qt.green)
+                pen.setWidth(4)
                 path_item.setPen(pen)
 
         if 'rect' in attrs:

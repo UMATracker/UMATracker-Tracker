@@ -110,6 +110,7 @@ class Widget(Ui_group_tracker_widget, QtWidgets.QWidget):
         skeletons = []
         for i in range(n_objects):
             p_data = non_zero_pos[predict == i]
+            print(type(p_data).__name__)
 
             ch_vtx_list = skeletonize2D.get_concave_hull(p_data.astype(np.int32))
             ch_poly = unary_union(list(polygonize(geometry.MultiLineString(ch_vtx_list))))
