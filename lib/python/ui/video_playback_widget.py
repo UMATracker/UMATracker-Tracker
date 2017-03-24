@@ -377,7 +377,7 @@ class VideoPlaybackWidget(QtWidgets.QWidget, Ui_VideoPlaybackWidget):
 
         value = quotient * self.playbackDelta
         if remainder > self.playbackDelta/2:
-            value += 1
+            value += self.playbackDelta
 
         if value == self.currentFrameNo:
             return
