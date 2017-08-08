@@ -401,8 +401,7 @@ class Ui_MainWindow(QMainWindow, Ui_MainWindowBase):
                 if len(filePath) is not 0:
                     logger.debug("Saving CSV file: {0}".format(filePath))
 
-                    row_max = self.currentFrameNo
-                    df = df.loc[:row_max].copy().dropna()
+                    df = df.copy().dropna()
                     levels = df.columns.levels
                     col = ['{0}{1}'.format(l,i) for i in levels[0] for l in levels[1]]
                     df.columns = col
