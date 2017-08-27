@@ -330,10 +330,10 @@ class Ui_MainWindow(QMainWindow, Ui_MainWindowBase):
         if filePath is None:
             filePath, _ = QFileDialog.getOpenFileName(None, 'Open Video File', userDir)
 
+        global filterOperation
         if len(filePath) is not 0:
             if filterOperation is not None and self.videoPlaybackWidget.isOpened():
                 if self.initializeEventDialog():
-                    global filterOperation
                     filterOperation = None
                     self.removeTrackingGraphicsItems()
                     self.savedFlag = True
