@@ -86,7 +86,7 @@ class Widget(Ui_group_tracker_widget, QtWidgets.QWidget):
     def get_attributes(self):
         return {'position':('x', 'y'), 'path':None, 'polygon':None}
 
-    def track(self, original_img, filtered_img):
+    def track(self, original_img, filtered_img, prev_data):
         n_objects = self.nObjectsSpinBox.value()
         n_k_means = self.nKmeansSpinBox.value()
 

@@ -40,7 +40,7 @@ class Widget(Ui_Kmeans_widget, QtWidgets.QWidget):
     def get_attributes(self):
         return {'position':('x', 'y')}
 
-    def track(self, original_img, filtered_img):
+    def track(self, original_img, filtered_img, prev_data):
         n_objects = self.nObjectsSpinBox.value()
         distance_threshold = self.distanceThresholdSpinBox.value()
 

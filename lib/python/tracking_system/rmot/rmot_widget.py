@@ -61,7 +61,7 @@ class Widget(Ui_RMOT_widget, QtWidgets.QWidget):
     def get_attributes(self):
         return {'position':('x', 'y'), 'rect':None}
 
-    def track(self, original_img, filtered_img):
+    def track(self, original_img, filtered_img, prev_data):
         n_objects = self.nObjectsSpinBox.value()
         n_k_means = self.nKmeansSpinBox.value()
 

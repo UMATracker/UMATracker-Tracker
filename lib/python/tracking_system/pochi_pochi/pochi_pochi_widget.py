@@ -5,11 +5,12 @@ from PyQt5 import QtCore, QtGui, QtWidgets
 from PyQt5.QtCore import pyqtSignal, pyqtSlot
 
 try:
-    from .ui_kmeans_widget import Ui_Kmeans_widget
+    from .ui_pochi_pochi_widget import Ui_Pochi_pochi_widget
 except ImportError:
-    from ui_kmeans_widget import Ui_Kmeans_widget
+    from ui_pochi_pochi_widget import Ui_Pochi_pochi_widget
 
-class Widget(Ui_Kmeans_widget, QtWidgets.QWidget):
+
+class Widget(Ui_Pochi_pochi_widget, QtWidgets.QWidget):
     reset = pyqtSignal()
     restart = pyqtSignal()
 
@@ -24,31 +25,39 @@ class Widget(Ui_Kmeans_widget, QtWidgets.QWidget):
         self.resetButton.pressed.connect(self.reset_button_pressed)
 
     def estimator_init(self):
-        self.k_means = None
+        pass
 
     def reset_estimator(self, kv):
         pass
 
     def get_name(self):
-        return 'K-means (w/o tracking)'
+        return 'Pochi-Pochi (Positioning by your hand)'
 
     def get_tracking_n(self):
         return self.nObjectsSpinBox.value()
 
     def get_attributes(self):
-        return {'position':('x', 'y')}
+        return {'position': ('x', 'y')}
 
     def track(self, original_img, filtered_img, prev_data):
         n_objects = self.nObjectsSpinBox.value()
 
-        if self.k_means is None:
-            self.k_means = cluster.KMeans(n_clusters=n_objects)
+        if prev_data['position'] is not None:
+            center_pos = np.copy(prev_data['position'])
+        else:
+            y, x, _ = original_img.shape
+            c_x = x / 2
+            c_y = y / 2
 
-        non_zero_pos = np.transpose(np.nonzero(filtered_img.T))
-        try:
-            center_pos = self.k_means.fit(non_zero_pos).cluster_centers_
-        except:
-            return {'position': np.array([np.nan for i in range(n_objects)])}
+            r = min(c_x, c_y) / 2
+            t_delta = (2 * np.pi) / n_objects
+
+            center_pos = np.array([
+                [
+                    r * np.cos(t_delta * i) + c_x,
+                    r * np.sin(t_delta * i) + c_y
+                ] for i in range(n_objects)
+            ])
 
         return {'position': center_pos}
 

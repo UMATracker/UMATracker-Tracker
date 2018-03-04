@@ -570,6 +570,8 @@ class Ui_MainWindow(QMainWindow, Ui_MainWindowBase):
 
     def initializeTrackingSystem(self):
         self.isInitialized = False
+        self.removeTrackingGraphicsItems()
+
         if  not (self.videoPlaybackWidget.isOpened() and filterOperation is not None):
             return False
 
@@ -611,8 +613,6 @@ class Ui_MainWindow(QMainWindow, Ui_MainWindowBase):
                     dtype=np.float64
                     ).sort_index().sort_index(axis=1)
                 self.df[k].index.name = k
-
-        self.removeTrackingGraphicsItems()
 
         if 'position' in attrs:
             self.trackingPathGroup = TrackingPathGroup()
@@ -679,8 +679,29 @@ class Ui_MainWindow(QMainWindow, Ui_MainWindowBase):
 
         try:
             widget = self.stackedWidget.currentWidget()
-            res = widget.track(self.cv_img.copy(), img)
+            prev_pos = self.videoPlaybackWidget.getPrevFramePos()
             attrs = widget.get_attributes()
+
+            if prev_pos >= 0:
+                prev_data = {
+                    k: self.data_dict[k][prev_pos]
+                    for k in self.data_dict.keys()
+                }
+
+                for k in self.df.keys():
+                    df = self.df[k]
+                    prev_data[k] = [
+                        np.copy(df.loc[prev_pos, i].as_matrix())
+                        for i in df.columns.levels[0]
+                    ]
+            else:
+                prev_data = {k: None for k in attrs.keys()}
+
+            res = widget.track(
+                self.cv_img.copy(),
+                img,
+                prev_data
+            )
         except Exception as e:
             msg = 'Tracking Lib. Tracking method Fail:\n{}'.format(e)
             self.generateCriticalMessage(msg)
