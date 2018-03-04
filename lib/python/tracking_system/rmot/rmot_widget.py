@@ -55,6 +55,9 @@ class Widget(Ui_RMOT_widget, QtWidgets.QWidget):
     def get_name(self):
         return 'RMOT'
 
+    def is_filter_required(self):
+        return True
+
     def get_tracking_n(self):
         return self.nObjectsSpinBox.value()
 

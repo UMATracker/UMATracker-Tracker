@@ -33,6 +33,9 @@ class Widget(Ui_Pochi_pochi_widget, QtWidgets.QWidget):
     def get_name(self):
         return 'Pochi-Pochi (Positioning by your hand)'
 
+    def is_filter_required(self):
+        return False
+
     def get_tracking_n(self):
         return self.nObjectsSpinBox.value()
 

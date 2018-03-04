@@ -80,6 +80,9 @@ class Widget(Ui_group_tracker_widget, QtWidgets.QWidget):
     def get_name(self):
         return 'Group Tracker with skeleton estimator'
 
+    def is_filter_required(self):
+        return True
+
     def get_tracking_n(self):
         return self.nObjectsSpinBox.value()
 

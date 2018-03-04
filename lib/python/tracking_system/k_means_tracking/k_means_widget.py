@@ -34,6 +34,9 @@ class Widget(Ui_Kmeans_widget, QtWidgets.QWidget):
     def get_name(self):
         return 'K-means w/ tracking'
 
+    def is_filter_required(self):
+        return True
+
     def get_tracking_n(self):
         return self.nObjectsSpinBox.value()
 

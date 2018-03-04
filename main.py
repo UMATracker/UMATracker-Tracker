@@ -572,27 +572,37 @@ class Ui_MainWindow(QMainWindow, Ui_MainWindowBase):
         self.isInitialized = False
         self.removeTrackingGraphicsItems()
 
-        if  not (self.videoPlaybackWidget.isOpened() and filterOperation is not None):
-            return False
-
         if self.currentFrameNo != 0:
             ret, frame = self.videoPlaybackWidget.readFrame(0)
             self.cv_img = frame
+            self.updateInputGraphicsView()
             self.currentFrameNo = 0
             self.videoPlaybackWidget.setSliderValueWithoutSignal(0)
 
-        self.filter = filterOperation(self.cv_img)
-        self.filter.fgbg = self.filterIO.getBackgroundImg()
-        self.filter.isInit = True
+        self.videoPlaybackWidget.setMaxTickableFrameNo(0)
+
 
         try:
             tracking_n = self.stackedWidget.currentWidget().get_tracking_n()
             attrs = self.stackedWidget.currentWidget().get_attributes()
+            is_filter_required = self.stackedWidget.currentWidget().is_filter_required()
             attrs.keys()
         except Exception as e:
             msg = 'Tracking Lib. Tracking N or attributes Error:\n{}'.format(e)
             self.generateCriticalMessage(msg)
             return
+
+        if not (self.videoPlaybackWidget.isOpened() and
+           (filterOperation is not None or not is_filter_required)):
+            return False
+
+
+        if is_filter_required:
+            self.filter = filterOperation(self.cv_img)
+            self.filter.fgbg = self.filterIO.getBackgroundImg()
+            self.filter.isInit = True
+        else:
+            self.filter = None
 
         max_frame_pos = self.videoPlaybackWidget.getMaxFramePos()
 
@@ -657,7 +667,6 @@ class Ui_MainWindow(QMainWindow, Ui_MainWindowBase):
                 path_item.setZValue(900)
                 self.inputScene.addItem(path_item)
 
-        self.videoPlaybackWidget.setMaxTickableFrameNo(0)
         # if self.currentFrameNo != 0:
         #     self.videoPlaybackWidget.moveToFrame(0)
         self.videoPlaybackWidget.setPlaybackDelta(self.playbackDeltaSpinBox.value())
@@ -675,7 +684,10 @@ class Ui_MainWindow(QMainWindow, Ui_MainWindowBase):
             self.updateFrame.emit()
             return
 
-        img = self.filter.filterFunc(self.cv_img.copy())
+        if self.filter is not None:
+            img = self.filter.filterFunc(self.cv_img.copy())
+        else:
+            img = None
 
         try:
             widget = self.stackedWidget.currentWidget()
