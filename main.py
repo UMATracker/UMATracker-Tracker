@@ -572,7 +572,7 @@ class Ui_MainWindow(QMainWindow, Ui_MainWindowBase):
         self.isInitialized = False
         self.removeTrackingGraphicsItems()
 
-        if self.currentFrameNo != 0:
+        if hasattr(self, 'currentFrameNo') and self.currentFrameNo != 0:
             ret, frame = self.videoPlaybackWidget.readFrame(0)
             self.cv_img = frame
             self.updateInputGraphicsView()
