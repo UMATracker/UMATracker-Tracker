@@ -524,7 +524,7 @@ class Ui_MainWindow(QMainWindow, Ui_MainWindowBase):
         self.evaluate()
 
     def restartDataframe(self):
-        if len(self.df.keys())==0:
+        if len(self.df.keys()) == 0:
             return
 
         for attr in self.df.keys():
@@ -532,16 +532,16 @@ class Ui_MainWindow(QMainWindow, Ui_MainWindowBase):
 
         for k in list(self.data_dict.keys()):
             for kk in list(self.data_dict[k].keys()):
-                if kk=='name':
+                if kk == 'name':
                     continue
-                elif int(kk)>self.currentFrameNo:
+                elif int(kk) > self.currentFrameNo:
                     del self.data_dict[k][kk]
 
         df = {}
         for attr in self.df.keys():
             df[attr] = self.df[attr].loc[self.currentFrameNo]
 
-        kv = {k:[] for k in self.df.keys()}
+        kv = {k: [] for k in self.df.keys()}
         for key, value in kv.items():
             mul_levs = df[key].index.levels
             for i in mul_levs[0]:
@@ -551,6 +551,10 @@ class Ui_MainWindow(QMainWindow, Ui_MainWindowBase):
 
         for key, value in self.data_dict.items():
             kv[key] = [np.array(v) for v in value[self.currentFrameNo]]
+
+        self.videoPlaybackWidget.setMaxTickableFrameNo(
+            self.currentFrameNo + self.videoPlaybackWidget.playbackDelta
+        )
 
         try:
             widget = self.stackedWidget.currentWidget()
@@ -580,7 +584,6 @@ class Ui_MainWindow(QMainWindow, Ui_MainWindowBase):
             self.videoPlaybackWidget.setSliderValueWithoutSignal(0)
 
         self.videoPlaybackWidget.setMaxTickableFrameNo(0)
-
 
         try:
             tracking_n = self.stackedWidget.currentWidget().get_tracking_n()
@@ -677,7 +680,7 @@ class Ui_MainWindow(QMainWindow, Ui_MainWindowBase):
         if not self.isInitialized:
             return
 
-        if len(self.df.keys())!=0 and np.all([np.all(pd.notnull(df.loc[self.currentFrameNo])) for df in self.df.values()]):
+        if self.currentFrameNo + 1 < self.videoPlaybackWidget.getMaxTickableFrameNo():
             print('update')
             self.updatePath()
             self.updateInputGraphicsView()
@@ -709,18 +712,26 @@ class Ui_MainWindow(QMainWindow, Ui_MainWindowBase):
             else:
                 prev_data = {k: None for k in attrs.keys()}
 
+            prev_data['ignore_error'] = (
+                self.ignoreMisDetectionErrorCheckBox.checkState() == Qt.Checked
+            )
+
             res = widget.track(
                 self.cv_img.copy(),
                 img,
                 prev_data
             )
         except Exception as e:
+            self.videoPlaybackWidget.stop()
+            self.videoPlaybackWidget.moveToFrame(
+                max(0, self.currentFrameNo - self.videoPlaybackWidget.playbackDelta)
+            )
             msg = 'Tracking Lib. Tracking method Fail:\n{}'.format(e)
             self.generateCriticalMessage(msg)
             return
 
-        for k,v in res.items():
-            if k=='path' or k=='rect' or k=='polygon':
+        for k, v in res.items():
+            if k == 'path' or k == 'rect' or k == 'polygon':
                 self.data_dict[k][self.currentFrameNo] = ndarray_to_list(v)
                 continue
             if not attrs[k]:
@@ -728,7 +739,8 @@ class Ui_MainWindow(QMainWindow, Ui_MainWindowBase):
             for i in range(len(v)):
                 self.df[k].loc[self.currentFrameNo, i] = v[i]
 
-        maxTickableFrameNo = self.currentFrameNo+self.videoPlaybackWidget.playbackDelta
+        maxTickableFrameNo = \
+            self.currentFrameNo + self.videoPlaybackWidget.playbackDelta
         if maxTickableFrameNo > self.videoPlaybackWidget.getMaxFramePos():
             maxTickableFrameNo = self.currentFrameNo
 
@@ -768,7 +780,7 @@ class Ui_MainWindow(QMainWindow, Ui_MainWindowBase):
         if event.type() == QEvent.Wheel:
             self.videoPlaybackWidget.wheelEvent(event)
             return True
-        
+
         if event.type() == QEvent.KeyPress:
             if Qt.Key_Home <= event.key() <= Qt.Key_PageDown:
                 self.videoPlaybackWidget.keyPressEvent(event)
@@ -797,5 +809,3 @@ if __name__ == "__main__":
     MainWindow.show()
     app.installEventFilter(MainWindow)
     sys.exit(app.exec_())
-
-

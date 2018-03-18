@@ -54,7 +54,10 @@ class Widget(Ui_Kmeans_widget, QtWidgets.QWidget):
         try:
             center_pos = self.k_means.fit(non_zero_pos).cluster_centers_
         except:
-            return {'position': self.ret_pos_old}
+            if self.ret_pos_old is None:
+                return {'position': np.full((n_objects, 2), np.nan)}
+            else:
+                return {'position': self.ret_pos_old}
 
         if self.ret_pos_old is None:
             self.ret_pos_old = center_pos.copy()

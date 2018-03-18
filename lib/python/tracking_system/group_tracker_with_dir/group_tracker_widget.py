@@ -14,6 +14,7 @@ try:
 except ImportError:
     from group_tracker import GroupTrackerGMM
 
+
 class Widget(Ui_group_tracker_widget, QtWidgets.QWidget):
     reset = pyqtSignal()
     restart = pyqtSignal()
@@ -28,9 +29,13 @@ class Widget(Ui_group_tracker_widget, QtWidgets.QWidget):
 
         self.resetButton.pressed.connect(self.reset_button_pressed)
         self.restartButton.pressed.connect(self.restart_button_pressed)
-        self.nObjectsSpinBox.valueChanged.connect(self.n_objects_spinbox_value_changed)
+        self.nObjectsSpinBox.valueChanged.connect(
+            self.n_objects_spinbox_value_changed
+        )
 
-        self.likelihoodDiffThresholdSpinBox.valueChanged.connect(self.likelihoodDiffThresholdSpinBoxValueChanged)
+        self.likelihoodDiffThresholdSpinBox.valueChanged.connect(
+            self.likelihoodDiffThresholdSpinBoxValueChanged
+        )
 
     def likelihoodDiffThresholdSpinBoxValueChanged(self, val):
         if self.gmm is not None:
@@ -43,8 +48,12 @@ class Widget(Ui_group_tracker_widget, QtWidgets.QWidget):
 
     def reset_estimator(self, kv):
         if self.gmm is not None:
-            self.gmm.means_ = kv['position']
-            self.dirs = kv['arrow'] - kv['position']
+            if np.all(np.isnan(kv['position'])):
+                self.gmm = None
+            else:
+                self.gmm.means_[:] = kv['position']
+                self.dirs = kv['arrow'] - kv['position']
+                self.gmm.params = 'wc'
 
     def get_name(self):
         return 'Group Tracker GMM w/ Direction estimator'
@@ -56,7 +65,7 @@ class Widget(Ui_group_tracker_widget, QtWidgets.QWidget):
         return self.nObjectsSpinBox.value()
 
     def get_attributes(self):
-        return {'position':('x', 'y'), 'arrow':('x', 'y')}
+        return {'position': ('x', 'y'), 'arrow': ('x', 'y')}
 
     def track(self, original_img, filtered_img, prev_data):
         n_objects = self.nObjectsSpinBox.value()
@@ -65,13 +74,22 @@ class Widget(Ui_group_tracker_widget, QtWidgets.QWidget):
         non_zero_pos = np.transpose(np.nonzero(filtered_img.T))
 
         if self.gmm is None:
-            self.gmm = GroupTrackerGMM(n_components=n_objects, covariance_type='full', n_iter=2000)
-            self.gmm.set_likelihood_diff_threshold(self.likelihoodDiffThresholdSpinBox.value())
+            gmm = GroupTrackerGMM(
+                n_components=n_objects,
+                covariance_type='full',
+                n_iter=2000
+            )
+            gmm.set_likelihood_diff_threshold(
+                self.likelihoodDiffThresholdSpinBox.value()
+            )
+        else:
+            gmm = self.gmm
 
         # FIXME: 真っ黒な画像が入力されたときのためアドホックに対処．
         try:
-            self.gmm._fit(non_zero_pos, n_k_means=n_k_means)
-            self.res = self.gmm.means_
+            gmm._fit(non_zero_pos, n_k_means=n_k_means)
+            self.gmm = gmm
+            res = self.gmm.means_
 
             labels = self.gmm.predict(non_zero_pos)
             if self.pca is None:
@@ -80,7 +98,7 @@ class Widget(Ui_group_tracker_widget, QtWidgets.QWidget):
             if self.dirs is None:
                 self.dirs = [None for i in range(self.gmm.n_components)]
             for i in range(self.gmm.n_components):
-                ps = non_zero_pos[labels==i]
+                ps = non_zero_pos[labels == i]
                 try:
                     self.pca.fit_transform(ps)
                 except:
@@ -101,9 +119,15 @@ class Widget(Ui_group_tracker_widget, QtWidgets.QWidget):
                     dots = list(map(lambda x: np.dot(x, self.dirs[i]), l))
                     self.dirs[i] = l[np.argmax(dots)]
         except:
-            pass
+            if self.gmm is None:
+                res = np.full((n_objects, 2), np.nan)
+                self.dirs = np.full((n_objects, 2), np.nan)
+            else:
+                if prev_data['ignore_error']:
+                    res = prev_data['position']
+                    self.dirs = prev_data['arrow'] - prev_data['position']
 
-        return {'position': self.res, 'arrow': self.dirs+self.res}
+        return {'position': res, 'arrow': self.dirs+res}
 
     @pyqtSlot()
     def reset_button_pressed(self):
