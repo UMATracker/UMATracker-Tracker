@@ -23,6 +23,7 @@ class Widget(Ui_Pochi_pochi_widget, QtWidgets.QWidget):
         super(Widget, self).setupUi(self)
 
         self.resetButton.pressed.connect(self.reset_button_pressed)
+        self.restartButton.pressed.connect(self.restart_button_pressed)
 
     def estimator_init(self):
         pass
@@ -69,3 +70,6 @@ class Widget(Ui_Pochi_pochi_widget, QtWidgets.QWidget):
         self.estimator_init()
         self.reset.emit()
 
+    @pyqtSlot()
+    def restart_button_pressed(self):
+        self.restart.emit()
