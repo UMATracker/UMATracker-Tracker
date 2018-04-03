@@ -813,7 +813,7 @@ if __name__ == "__main__":
     app = QtWidgets.QApplication(sys.argv)
     MainWindow = Ui_MainWindow()
     MainWindow.setWindowIcon(QIcon(':/icon/icon.ico'))
-    MainWindow.setWindowTitle('UMATracker-Track')
+    MainWindow.setWindowTitle('UMATracker-Tracking')
     MainWindow.show()
     app.installEventFilter(MainWindow)
     sys.exit(app.exec_())
