@@ -57,8 +57,8 @@ if os.path.exists(user_defined_lib_path):
     gen_init_py(user_defined_tracking_system_path, user_defined_lib_path)
 
 from PyQt5 import QtCore, QtWidgets, QtGui
-from PyQt5.QtWidgets import QGraphicsScene, QGraphicsView, QGraphicsPixmapItem, QFrame, QFileDialog, QMainWindow, QProgressDialog, QGraphicsRectItem, QActionGroup, QGraphicsPathItem
-from PyQt5.QtGui import QPixmap, QImage, QIcon, QPainterPath, QPolygonF, QPen
+from PyQt5.QtWidgets import QGraphicsScene, QGraphicsView, QGraphicsPixmapItem, QFrame, QFileDialog, QMainWindow, QProgressDialog, QGraphicsRectItem, QActionGroup, QGraphicsPathItem, QShortcut
+from PyQt5.QtGui import QPixmap, QImage, QIcon, QPainterPath, QPolygonF, QPen, QKeySequence
 from PyQt5.QtCore import Qt, QRectF, QPointF, pyqtSignal, pyqtSlot, QEvent
 
 import cv2
@@ -144,6 +144,9 @@ class Ui_MainWindow(QMainWindow, Ui_MainWindowBase):
         self.cv_img = None
         self.filePath = None
         self.savedFlag = True
+
+        QShortcut(QKeySequence("Ctrl+R"), self, self.restartDataframe)
+        QShortcut(QKeySequence("Ctrl+S"), self, self.saveCSVFile)
 
     def dragEnterEvent(self,event):
         event.acceptProposedAction()
@@ -782,7 +785,12 @@ class Ui_MainWindow(QMainWindow, Ui_MainWindowBase):
             return True
 
         if event.type() == QEvent.KeyPress:
-            if Qt.Key_Home <= event.key() <= Qt.Key_PageDown:
+            qwop = [Qt.Key_Q, Qt.Key_W, Qt.Key_O, Qt.Key_P]
+            is_qwop = (True in map(lambda x: x == event.key(), qwop))
+
+            is_arrow = (Qt.Key_Home <= event.key() <= Qt.Key_PageDown)
+
+            if is_arrow or is_qwop:
                 self.videoPlaybackWidget.keyPressEvent(event)
                 return True
 

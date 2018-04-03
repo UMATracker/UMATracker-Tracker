@@ -13,7 +13,7 @@ import sys
 from enum import Enum
 from PyQt5 import QtWidgets, QtCore
 from PyQt5.QtWidgets import QStyle
-from PyQt5.QtCore import pyqtSignal, pyqtSlot, QThread
+from PyQt5.QtCore import pyqtSignal, pyqtSlot, QThread, Qt
 
 __version__ = '0.0.1'
 try:
@@ -470,7 +470,12 @@ FPS: {3}
         e.accept()
 
     def keyPressEvent(self, e):
-        self.playbackSlider.keyPressEvent(e)
+        if e.key() == Qt.Key_W or e.key() == Qt.Key_P:
+            self.moveNextButtonClicked()
+        if e.key() == Qt.Key_Q or e.key() == Qt.Key_O:
+            self.movePrevButtonClicked()
+        else:
+            self.playbackSlider.keyPressEvent(e)
 
 
 if __name__ == "__main__":
