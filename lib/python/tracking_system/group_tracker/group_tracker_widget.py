@@ -89,12 +89,18 @@ class Widget(Ui_group_tracker_widget, QtWidgets.QWidget):
             gmm._fit(non_zero_pos, n_k_means=n_k_means)
             self.gmm = gmm
             res = self.gmm.means_
-        except:
+        except Exception as e:
             if self.gmm is None:
                 res = np.full((n_objects, 2), np.nan)
             else:
                 if prev_data['ignore_error']:
                     res = prev_data['position']
+                else:
+                    raise RuntimeError(
+                        '{}\n'
+                        'Please check "Ignore mis-detection error" on '
+                        'if you want to ignore tracking errors.'.format(e)
+                    )
 
         return {'position': res}
 

@@ -118,7 +118,7 @@ class Widget(Ui_group_tracker_widget, QtWidgets.QWidget):
                         l.append(-axis)
                     dots = list(map(lambda x: np.dot(x, self.dirs[i]), l))
                     self.dirs[i] = l[np.argmax(dots)]
-        except:
+        except Exception as e:
             if self.gmm is None:
                 res = np.full((n_objects, 2), np.nan)
                 self.dirs = np.full((n_objects, 2), np.nan)
@@ -126,6 +126,12 @@ class Widget(Ui_group_tracker_widget, QtWidgets.QWidget):
                 if prev_data['ignore_error']:
                     res = prev_data['position']
                     self.dirs = prev_data['arrow'] - prev_data['position']
+                else:
+                    raise RuntimeError(
+                        '{}\n'
+                        'Please check "Ignore mis-detection error" on '
+                        'if you want to ignore tracking errors.'.format(e)
+                    )
 
         return {'position': res, 'arrow': self.dirs+res}
 
