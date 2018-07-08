@@ -1,8 +1,6 @@
 from functools import partial
 import numpy as np
 
-from .hungarian import Hungarian
-
 from sklearn.utils.linear_assignment_ import linear_assignment
 
 def symmetrize(a):
@@ -52,7 +50,6 @@ class RMOT:
         self.N = xs.shape[0]
         self.xPrev = xs
 
-        self.hungarian = Hungarian()
         self.tau       = 5
         self.costMtx   = None
         self.assignMtx = None

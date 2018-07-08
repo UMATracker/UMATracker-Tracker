@@ -1,1 +1,1 @@
-__all__ = ['hungarian', 'rmot', 'rmot_widget', 'ui_rmot_widget']
+__all__ = ['rmot', 'rmot_widget', 'ui_rmot_widget']
