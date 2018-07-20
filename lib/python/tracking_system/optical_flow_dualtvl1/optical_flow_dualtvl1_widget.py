@@ -36,13 +36,16 @@ class Widget(Ui_OpticalFlowDualTVL1_widget, QtWidgets.QWidget):
     def get_name(self):
         return 'Optical Flow (DualTVL1)'
 
+    def is_filter_required(self):
+        return True
+
     def get_tracking_n(self):
         return self.nObjectsSpinBox.value()
 
     def get_attributes(self):
         return {'position':('x', 'y'), 'rect':None}
 
-    def track(self, original_img, filtered_img):
+    def track(self, original_img, filtered_img, prev_data):
         n_objects = self.nObjectsSpinBox.value()
         n_k_means = self.nKmeansSpinBox.value()
 

@@ -1,13 +1,10 @@
 # Tsukasa Fukunaga*, Shoko Kubota, Shoji Oda, and Wataru Iwasaki*. GroupTracker: Video Tracking System for Multiple Animals under Severe Occlusion. Computational Biology and Chemistry 57, 39-45. (2015)
 
 from sklearn import mixture, cluster
+from sklearn.utils.linear_assignment_ import linear_assignment
 import numpy as np
 from numpy import linalg as LA
 
-try:
-    from .hungarian import Hungarian
-except SystemError:
-    from hungarian import Hungarian
 
 EPS = np.finfo(float).eps
 
@@ -15,7 +12,6 @@ class GroupTrackerGMM(mixture.GMM):
     # TODO:要調整（というより，UIから調整可能にすること）
     alpha = 0.7
     max_dist = 5
-    hungarian = Hungarian()
 
     def set_likelihood_diff_threshold(self, th):
         self.alpha = th
@@ -78,10 +74,9 @@ class GroupTrackerGMM(mixture.GMM):
                         ).reshape(cost_mtx_shape)
 
                 cost_mtx = LA.norm(new_means_mtx - prev_means_mtx, axis=2)
-                self.hungarian.calculate(cost_mtx)
+                idx = linear_assignment(cost_mtx)
 
-                for pos in self.hungarian.get_results():
-                    self.means_[pos[1], :] = means[pos[0], :]
+                self.means_[idx[:, 1], :] = means[idx[:, 0], :]
 
                 self.weights_ = self.prev_weights_
                 self.covars_ = self.prev_covars_

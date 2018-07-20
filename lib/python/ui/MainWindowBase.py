@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 
-# Form implementation generated from reading ui file 'MainWindowBase.ui'
+# Form implementation generated from reading ui file '.\MainWindowBase.ui'
 #
-# Created by: PyQt5 UI code generator 5.5.1
+# Created by: PyQt5 UI code generator 5.4.2
 #
 # WARNING! All changes made in this file will be lost!
 
@@ -75,6 +75,9 @@ class Ui_MainWindowBase(object):
         self.stackedWidget = QtWidgets.QStackedWidget(self.algorithmSettingsGroupBox)
         self.stackedWidget.setObjectName("stackedWidget")
         self.verticalLayout.addWidget(self.stackedWidget)
+        self.ignoreMisDetectionErrorCheckBox = QtWidgets.QCheckBox(self.algorithmSettingsGroupBox)
+        self.ignoreMisDetectionErrorCheckBox.setObjectName("ignoreMisDetectionErrorCheckBox")
+        self.verticalLayout.addWidget(self.ignoreMisDetectionErrorCheckBox)
         self.horizontalLayout_5 = QtWidgets.QHBoxLayout()
         self.horizontalLayout_5.setObjectName("horizontalLayout_5")
         self.arrowCheckBox = QtWidgets.QCheckBox(self.algorithmSettingsGroupBox)
@@ -186,6 +189,7 @@ class Ui_MainWindowBase(object):
         self.graphicsBox.setTitle(_translate("MainWindowBase", "Object Tracking"))
         self.algorithmSettingsGroupBox.setTitle(_translate("MainWindowBase", "Settings"))
         self.label_4.setText(_translate("MainWindowBase", "Frame delta"))
+        self.ignoreMisDetectionErrorCheckBox.setText(_translate("MainWindowBase", "Ignore mis-detection error"))
         self.arrowCheckBox.setText(_translate("MainWindowBase", "Arrow"))
         self.pathCheckBox.setText(_translate("MainWindowBase", "Path"))
         self.reverseArrowColorCheckBox.setText(_translate("MainWindowBase", "Reverse arrow color"))

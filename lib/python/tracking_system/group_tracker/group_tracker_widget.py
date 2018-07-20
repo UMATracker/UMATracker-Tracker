@@ -14,6 +14,7 @@ try:
 except ImportError:
     from group_tracker import GroupTrackerGMM
 
+
 class Widget(Ui_group_tracker_widget, QtWidgets.QWidget):
     reset = pyqtSignal()
     restart = pyqtSignal()
@@ -28,9 +29,13 @@ class Widget(Ui_group_tracker_widget, QtWidgets.QWidget):
 
         self.resetButton.pressed.connect(self.reset_button_pressed)
         self.restartButton.pressed.connect(self.restart_button_pressed)
-        self.nObjectsSpinBox.valueChanged.connect(self.n_objects_spinbox_value_changed)
+        self.nObjectsSpinBox.valueChanged.connect(
+            self.n_objects_spinbox_value_changed
+        )
 
-        self.likelihoodDiffThresholdSpinBox.valueChanged.connect(self.likelihoodDiffThresholdSpinBoxValueChanged)
+        self.likelihoodDiffThresholdSpinBox.valueChanged.connect(
+            self.likelihoodDiffThresholdSpinBoxValueChanged
+        )
 
     def likelihoodDiffThresholdSpinBoxValueChanged(self, val):
         if self.gmm is not None:
@@ -41,19 +46,25 @@ class Widget(Ui_group_tracker_widget, QtWidgets.QWidget):
 
     def reset_estimator(self, kv):
         if self.gmm is not None:
-            self.gmm.means_[:] = kv['position']
-            self.gmm.params = 'wc'
+            if np.all(np.isnan(kv['position'])):
+                self.gmm = None
+            else:
+                self.gmm.means_[:] = kv['position']
+                self.gmm.params = 'wc'
 
     def get_name(self):
         return 'Group Tracker GMM'
+
+    def is_filter_required(self):
+        return True
 
     def get_tracking_n(self):
         return self.nObjectsSpinBox.value()
 
     def get_attributes(self):
-        return {'position':('x', 'y'),}
+        return {'position': ('x', 'y')}
 
-    def track(self, original_img, filtered_img):
+    def track(self, original_img, filtered_img, prev_data):
         n_objects = self.nObjectsSpinBox.value()
         n_k_means = self.nKmeansSpinBox.value()
 
@@ -61,16 +72,37 @@ class Widget(Ui_group_tracker_widget, QtWidgets.QWidget):
 
         # FIXME: 真っ黒な画像が入力されたときのためアドホックに対処．
         if self.gmm is None:
-            self.gmm = GroupTrackerGMM(n_components=n_objects, covariance_type='full', n_iter=1000, init_params='wc', params='wc')
-            self.gmm.set_likelihood_diff_threshold(self.likelihoodDiffThresholdSpinBox.value())
+            gmm = GroupTrackerGMM(
+                n_components=n_objects,
+                covariance_type='full',
+                n_iter=1000,
+                init_params='wc',
+                params='wc'
+            )
+            gmm.set_likelihood_diff_threshold(
+                self.likelihoodDiffThresholdSpinBox.value()
+            )
+        else:
+            gmm = self.gmm
 
         try:
-            self.gmm._fit(non_zero_pos, n_k_means=n_k_means)
-            self.res = self.gmm.means_
-        except:
-            pass
+            gmm._fit(non_zero_pos, n_k_means=n_k_means)
+            self.gmm = gmm
+            res = self.gmm.means_
+        except Exception as e:
+            if self.gmm is None:
+                res = np.full((n_objects, 2), np.nan)
+            else:
+                if prev_data['ignore_error']:
+                    res = prev_data['position']
+                else:
+                    raise RuntimeError(
+                        '{}\n'
+                        'Please check "Ignore mis-detection error" on '
+                        'if you want to ignore tracking errors.'.format(e)
+                    )
 
-        return {'position': self.res,}
+        return {'position': res}
 
     @pyqtSlot()
     def reset_button_pressed(self):

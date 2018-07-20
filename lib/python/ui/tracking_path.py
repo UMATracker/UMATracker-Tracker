@@ -161,15 +161,21 @@ class TrackingPath(QGraphicsObject):
                 self.textItem.setPos(*point)
 
             else:
+                self.item.setPos(float('nan'), float('nan'))
                 self.item.hide()
+                self.textItem.hide()
 
             index_set = set(self.index)
 
-            prev_range = range(self.index[self.itemPos], self.index[0] - self.markDelta, -self.markDelta)[1:]
-            prev_range = sorted(list(index_set.intersection(prev_range)))
+            if self.itemPos is None:
+                prev_range = []
+                next_range = []
+            else:
+                prev_range = range(self.itemPos, self.index[0] - self.markDelta, -self.markDelta)[1:]
+                prev_range = sorted(list(index_set.intersection(prev_range)))
 
-            next_range = range(self.index[self.itemPos], self.index[-1] + self.markDelta, self.markDelta)[1:]
-            next_range = sorted(list(index_set.intersection(next_range)))
+                next_range = range(self.itemPos, self.index[-1] + self.markDelta, self.markDelta)[1:]
+                next_range = sorted(list(index_set.intersection(next_range)))
 
             num_mark = len(prev_range) + len(next_range)
 

@@ -34,13 +34,16 @@ class Widget(Ui_Kmeans_widget, QtWidgets.QWidget):
     def get_name(self):
         return 'K-means w/ tracking'
 
+    def is_filter_required(self):
+        return True
+
     def get_tracking_n(self):
         return self.nObjectsSpinBox.value()
 
     def get_attributes(self):
         return {'position':('x', 'y')}
 
-    def track(self, original_img, filtered_img):
+    def track(self, original_img, filtered_img, prev_data):
         n_objects = self.nObjectsSpinBox.value()
         distance_threshold = self.distanceThresholdSpinBox.value()
 
@@ -51,7 +54,10 @@ class Widget(Ui_Kmeans_widget, QtWidgets.QWidget):
         try:
             center_pos = self.k_means.fit(non_zero_pos).cluster_centers_
         except:
-            return {'position': self.ret_pos_old}
+            if self.ret_pos_old is None:
+                return {'position': np.full((n_objects, 2), np.nan)}
+            else:
+                return {'position': self.ret_pos_old}
 
         if self.ret_pos_old is None:
             self.ret_pos_old = center_pos.copy()

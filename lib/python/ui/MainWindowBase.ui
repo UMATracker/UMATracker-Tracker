@@ -116,6 +116,13 @@
            <widget class="QStackedWidget" name="stackedWidget"/>
           </item>
           <item>
+           <widget class="QCheckBox" name="ignoreMisDetectionErrorCheckBox">
+            <property name="text">
+             <string>Ignore mis-detection error</string>
+            </property>
+           </widget>
+          </item>
+          <item>
            <layout class="QHBoxLayout" name="horizontalLayout_5">
             <item>
              <widget class="QCheckBox" name="arrowCheckBox">

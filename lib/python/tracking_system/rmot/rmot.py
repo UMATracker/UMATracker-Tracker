@@ -1,9 +1,5 @@
-from numba import jit
-
 from functools import partial
 import numpy as np
-
-from .hungarian import Hungarian
 
 from sklearn.utils.linear_assignment_ import linear_assignment
 
@@ -54,7 +50,6 @@ class RMOT:
         self.N = xs.shape[0]
         self.xPrev = xs
 
-        self.hungarian = Hungarian()
         self.tau       = 5
         self.costMtx   = None
         self.assignMtx = None
@@ -80,7 +75,6 @@ class RMOT:
         self.xCond = np.einsum('...ij,...j', RMOT.F, x)
         self.pCond = np.dot(np.einsum('...ij,...jk->...ik',RMOT.F,self.pPrev), RMOT.F.T) + RMOT.Q
 
-    @jit
     def likelihood(self,z1,z2):
         x, y = z1[:2]
         wz1, hz1 = z1[2:4]
@@ -120,7 +114,6 @@ class RMOT:
         # return 1.0/(1.0+np.linalg.norm(z1[:2]-z2[:2]))
         return s/(1.0 + np.linalg.norm(z1[:2]-z2[:2]))
 
-    @jit
     def calcCostMtx(self,z):
         self.z = z
         self.M = z.shape[0]
@@ -140,7 +133,6 @@ class RMOT:
                 self.costMtx[i,k] = -np.log(self.likelihood(self.z[k], self.xCond[i,j]))
         self.costMtx = np.nan_to_num(self.costMtx)
 
-    @jit
     def calcAssignMtx(self):
         idx = linear_assignment(self.costMtx)
 
@@ -150,7 +142,6 @@ class RMOT:
             self.assignMtx[:] = 0
         self.assignMtx[idx[:, 0], idx[:,1]] = 1
 
-    @jit
     def calcObservationMtx(self):
         nonzeroPos = np.nonzero(self.assignMtx)
 
@@ -162,14 +153,12 @@ class RMOT:
 
         self.o = np.sum(self.gammaMtx, axis=1).astype(np.int)
 
-    @jit
     def calcEventProb(self):
         RMNsum = np.sum(self.RMN, axis=1).reshape(self.N,1)
 
         self.P_i_k = self.gammaMtx/RMNsum
         self.P_i_j = np.ones((self.N,self.N))/RMNsum - np.sum(self.P_i_k, axis=1).reshape(self.N,1)
 
-    @jit
     def calcRelativeWeight(self):
         Pz_i_j = self.P_i_j
 
@@ -182,7 +171,6 @@ class RMOT:
         weightProbMtx[self.RMN==0] = 0
         self.relativeWeightMtx = weightProbMtx/np.sum(weightProbMtx)
 
-    @jit
     def calcObjectStates(self):
         for i in range(self.N):
             if self.o[i]==1:

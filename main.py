@@ -57,8 +57,8 @@ if os.path.exists(user_defined_lib_path):
     gen_init_py(user_defined_tracking_system_path, user_defined_lib_path)
 
 from PyQt5 import QtCore, QtWidgets, QtGui
-from PyQt5.QtWidgets import QGraphicsScene, QGraphicsView, QGraphicsPixmapItem, QFrame, QFileDialog, QMainWindow, QProgressDialog, QGraphicsRectItem, QActionGroup, QGraphicsPathItem
-from PyQt5.QtGui import QPixmap, QImage, QIcon, QPainterPath, QPolygonF, QPen
+from PyQt5.QtWidgets import QGraphicsScene, QGraphicsView, QGraphicsPixmapItem, QFrame, QFileDialog, QMainWindow, QProgressDialog, QGraphicsRectItem, QActionGroup, QGraphicsPathItem, QShortcut
+from PyQt5.QtGui import QPixmap, QImage, QIcon, QPainterPath, QPolygonF, QPen, QKeySequence
 from PyQt5.QtCore import Qt, QRectF, QPointF, pyqtSignal, pyqtSlot, QEvent
 
 import cv2
@@ -144,6 +144,9 @@ class Ui_MainWindow(QMainWindow, Ui_MainWindowBase):
         self.cv_img = None
         self.filePath = None
         self.savedFlag = True
+
+        QShortcut(QKeySequence("Ctrl+R"), self, self.restartDataframe)
+        QShortcut(QKeySequence("Ctrl+S"), self, self.saveCSVFile)
 
     def dragEnterEvent(self,event):
         event.acceptProposedAction()
@@ -524,7 +527,7 @@ class Ui_MainWindow(QMainWindow, Ui_MainWindowBase):
         self.evaluate()
 
     def restartDataframe(self):
-        if len(self.df.keys())==0:
+        if len(self.df.keys()) == 0:
             return
 
         for attr in self.df.keys():
@@ -532,16 +535,16 @@ class Ui_MainWindow(QMainWindow, Ui_MainWindowBase):
 
         for k in list(self.data_dict.keys()):
             for kk in list(self.data_dict[k].keys()):
-                if kk=='name':
+                if kk == 'name':
                     continue
-                elif int(kk)>self.currentFrameNo:
+                elif int(kk) > self.currentFrameNo:
                     del self.data_dict[k][kk]
 
         df = {}
         for attr in self.df.keys():
             df[attr] = self.df[attr].loc[self.currentFrameNo]
 
-        kv = {k:[] for k in self.df.keys()}
+        kv = {k: [] for k in self.df.keys()}
         for key, value in kv.items():
             mul_levs = df[key].index.levels
             for i in mul_levs[0]:
@@ -551,6 +554,10 @@ class Ui_MainWindow(QMainWindow, Ui_MainWindowBase):
 
         for key, value in self.data_dict.items():
             kv[key] = [np.array(v) for v in value[self.currentFrameNo]]
+
+        self.videoPlaybackWidget.setMaxTickableFrameNo(
+            self.currentFrameNo + self.videoPlaybackWidget.playbackDelta
+        )
 
         try:
             widget = self.stackedWidget.currentWidget()
@@ -570,27 +577,38 @@ class Ui_MainWindow(QMainWindow, Ui_MainWindowBase):
 
     def initializeTrackingSystem(self):
         self.isInitialized = False
-        if  not (self.videoPlaybackWidget.isOpened() and filterOperation is not None):
-            return False
+        self.removeTrackingGraphicsItems()
 
-        if self.currentFrameNo != 0:
+        if hasattr(self, 'currentFrameNo') and self.currentFrameNo != 0:
             ret, frame = self.videoPlaybackWidget.readFrame(0)
             self.cv_img = frame
+            self.updateInputGraphicsView()
             self.currentFrameNo = 0
             self.videoPlaybackWidget.setSliderValueWithoutSignal(0)
 
-        self.filter = filterOperation(self.cv_img)
-        self.filter.fgbg = self.filterIO.getBackgroundImg()
-        self.filter.isInit = True
+        self.videoPlaybackWidget.setMaxTickableFrameNo(0)
 
         try:
             tracking_n = self.stackedWidget.currentWidget().get_tracking_n()
             attrs = self.stackedWidget.currentWidget().get_attributes()
+            is_filter_required = self.stackedWidget.currentWidget().is_filter_required()
             attrs.keys()
         except Exception as e:
             msg = 'Tracking Lib. Tracking N or attributes Error:\n{}'.format(e)
             self.generateCriticalMessage(msg)
             return
+
+        if not (self.videoPlaybackWidget.isOpened() and
+           (filterOperation is not None or not is_filter_required)):
+            return False
+
+
+        if is_filter_required:
+            self.filter = filterOperation(self.cv_img)
+            self.filter.fgbg = self.filterIO.getBackgroundImg()
+            self.filter.isInit = True
+        else:
+            self.filter = None
 
         max_frame_pos = self.videoPlaybackWidget.getMaxFramePos()
 
@@ -611,8 +629,6 @@ class Ui_MainWindow(QMainWindow, Ui_MainWindowBase):
                     dtype=np.float64
                     ).sort_index().sort_index(axis=1)
                 self.df[k].index.name = k
-
-        self.removeTrackingGraphicsItems()
 
         if 'position' in attrs:
             self.trackingPathGroup = TrackingPathGroup()
@@ -657,7 +673,6 @@ class Ui_MainWindow(QMainWindow, Ui_MainWindowBase):
                 path_item.setZValue(900)
                 self.inputScene.addItem(path_item)
 
-        self.videoPlaybackWidget.setMaxTickableFrameNo(0)
         # if self.currentFrameNo != 0:
         #     self.videoPlaybackWidget.moveToFrame(0)
         self.videoPlaybackWidget.setPlaybackDelta(self.playbackDeltaSpinBox.value())
@@ -668,26 +683,58 @@ class Ui_MainWindow(QMainWindow, Ui_MainWindowBase):
         if not self.isInitialized:
             return
 
-        if len(self.df.keys())!=0 and np.all([np.all(pd.notnull(df.loc[self.currentFrameNo])) for df in self.df.values()]):
+        if self.currentFrameNo + 1 < self.videoPlaybackWidget.getMaxTickableFrameNo():
             print('update')
             self.updatePath()
             self.updateInputGraphicsView()
             self.updateFrame.emit()
             return
 
-        img = self.filter.filterFunc(self.cv_img.copy())
+        if self.filter is not None:
+            img = self.filter.filterFunc(self.cv_img.copy())
+        else:
+            img = None
 
         try:
             widget = self.stackedWidget.currentWidget()
-            res = widget.track(self.cv_img.copy(), img)
+            prev_pos = self.videoPlaybackWidget.getPrevFramePos()
             attrs = widget.get_attributes()
+
+            if prev_pos >= 0:
+                prev_data = {
+                    k: self.data_dict[k][prev_pos]
+                    for k in self.data_dict.keys()
+                }
+
+                for k in self.df.keys():
+                    df = self.df[k]
+                    prev_data[k] = [
+                        np.copy(df.loc[prev_pos, i].as_matrix())
+                        for i in df.columns.levels[0]
+                    ]
+            else:
+                prev_data = {k: None for k in attrs.keys()}
+
+            prev_data['ignore_error'] = (
+                self.ignoreMisDetectionErrorCheckBox.checkState() == Qt.Checked
+            )
+
+            res = widget.track(
+                self.cv_img.copy(),
+                img,
+                prev_data
+            )
         except Exception as e:
+            self.videoPlaybackWidget.stop()
+            self.videoPlaybackWidget.moveToFrame(
+                max(0, self.currentFrameNo - self.videoPlaybackWidget.playbackDelta)
+            )
             msg = 'Tracking Lib. Tracking method Fail:\n{}'.format(e)
             self.generateCriticalMessage(msg)
             return
 
-        for k,v in res.items():
-            if k=='path' or k=='rect' or k=='polygon':
+        for k, v in res.items():
+            if k == 'path' or k == 'rect' or k == 'polygon':
                 self.data_dict[k][self.currentFrameNo] = ndarray_to_list(v)
                 continue
             if not attrs[k]:
@@ -695,7 +742,8 @@ class Ui_MainWindow(QMainWindow, Ui_MainWindowBase):
             for i in range(len(v)):
                 self.df[k].loc[self.currentFrameNo, i] = v[i]
 
-        maxTickableFrameNo = self.currentFrameNo+self.videoPlaybackWidget.playbackDelta
+        maxTickableFrameNo = \
+            self.currentFrameNo + self.videoPlaybackWidget.playbackDelta
         if maxTickableFrameNo > self.videoPlaybackWidget.getMaxFramePos():
             maxTickableFrameNo = self.currentFrameNo
 
@@ -735,9 +783,14 @@ class Ui_MainWindow(QMainWindow, Ui_MainWindowBase):
         if event.type() == QEvent.Wheel:
             self.videoPlaybackWidget.wheelEvent(event)
             return True
-        
+
         if event.type() == QEvent.KeyPress:
-            if Qt.Key_Home <= event.key() <= Qt.Key_PageDown:
+            qwop = [Qt.Key_Q, Qt.Key_W, Qt.Key_O, Qt.Key_P]
+            is_qwop = (True in map(lambda x: x == event.key(), qwop))
+
+            is_arrow = (Qt.Key_Home <= event.key() <= Qt.Key_PageDown)
+
+            if is_arrow or is_qwop:
                 self.videoPlaybackWidget.keyPressEvent(event)
                 return True
 
@@ -760,9 +813,7 @@ if __name__ == "__main__":
     app = QtWidgets.QApplication(sys.argv)
     MainWindow = Ui_MainWindow()
     MainWindow.setWindowIcon(QIcon(':/icon/icon.ico'))
-    MainWindow.setWindowTitle('UMATracker-Track')
+    MainWindow.setWindowTitle('UMATracker-Tracking')
     MainWindow.show()
     app.installEventFilter(MainWindow)
     sys.exit(app.exec_())
-
-
