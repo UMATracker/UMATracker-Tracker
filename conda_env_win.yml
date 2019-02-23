@@ -8,7 +8,6 @@ dependencies:
   - geos
   - icu
   - pandas
-  - pip
   - pyqtgraph
   - shapely
   - blas
@@ -22,4 +21,6 @@ dependencies:
   - qt
   - scikit-learn<0.20
   - scipy
+  - pip:
+    - networkx==1.9.1
 prefix: /Users/rito/miniconda3/envs/uma-dev
