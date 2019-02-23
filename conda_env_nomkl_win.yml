@@ -1,30 +1,27 @@
-name: uma-dev
+name: uma-dev-nomkl
 channels:
   - conda-forge
   - defaults
 dependencies:
+  - blas
   - cython
   - ffmpeg
   - geos
   - icu
-  - nasm
   - openblas
+  - opencv
   - pandas
   - pip
   - pyqtgraph
   - shapely
-  - x264
-  - zlib
-  - blas
   - intel-openmp
-  - libgfortran
-  - mkl
+  - nomkl
   - numpy
-  - opencv
+  - openssl
   - pyqt=5.9.2
   - python=3.6.5
+  - pywin32
   - qt
-  - readline
   - scikit-learn<0.20
   - scipy
-prefix: /Users/rito/miniconda3/envs/uma-dev
+prefix: /Users/rito/miniconda3/envs/uma-dev-nomkl
