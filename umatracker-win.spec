@@ -99,11 +99,11 @@ pyz = PYZ(a.pure, a.zipped_data, cipher=None)
 exe = EXE(pyz,
         a.scripts,
         name='UMATracker-Tracking',
-        debug=False,
+        debug=True,
         strip=None,
         upx=True,
         exclude_binaries=True,
-        console=False, icon='./icon/icon.ico')
+        console=True, icon='./icon/icon.ico')
 
 coll = COLLECT(exe,
         a.scripts,
@@ -111,7 +111,7 @@ coll = COLLECT(exe,
         a.zipfiles,
         a.datas,
         name='UMATracker-Tracking',
-        debug=False,
+        debug=True,
         strip=None,
         upx=True,
-        console=False, icon='./icon/icon.ico')
+        console=True, icon='./icon/icon.ico')
