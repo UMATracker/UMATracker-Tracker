@@ -1,0 +1,31 @@
+name: uma-dev
+channels:
+  - conda-forge
+  - defaults
+dependencies:
+  - cython
+  - ffmpeg
+  - geos
+  - icu
+  - nasm
+  - openblas
+  - pandas
+  - pyqtgraph
+  - shapely
+  - x264
+  - zlib
+  - blas
+  - intel-openmp
+  - libgfortran
+  - mkl
+  - numpy
+  - opencv
+  - pyqt=5.9.2
+  - python=3.6.5
+  - qt
+  - readline
+  - scikit-learn<0.20
+  - scipy
+  - pip:
+    - networkx==1.9.1
+prefix: /Users/rito/miniconda3/envs/uma-dev

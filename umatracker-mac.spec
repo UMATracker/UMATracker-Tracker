@@ -1,24 +1,42 @@
 import os
-import distutils.sysconfig
+import glob
 
 datas = [('./data', 'data'),
-        ('./lib/python/tracking_system', 'lib/python/tracking_system'),]
+        ('./lib/python/tracking_system', 'lib/python/tracking_system'),
+        ('./qt/mac/qt.conf', '.')]
 
-binaries = [(r'/usr/local/Cellar/ffms2/2.21/lib/libffms2.dylib', 'lib'), ]
+if os.getenv('CONDA_PREFIX'):
+    PREFIX = os.getenv('CONDA_PREFIX')
+else:
+    PREFIX = '/usr/local/Cellar/ffms2/*'
 
-site_package_dir = distutils.sysconfig.get_python_lib()
+ffms2_dlls = glob.glob(os.path.join(PREFIX, 'lib', 'libffms2.dylib'))
+ffmpeg_dlls = glob.glob(os.path.join(PREFIX, 'lib', 'libavresample.[0-9].dylib'))
+ffmpeg_dlls += glob.glob(os.path.join(PREFIX, 'lib', 'libswscale.[0-9].dylib'))
+ffmpeg_dlls += glob.glob(os.path.join(PREFIX, 'lib', 'libavutil.[0-9][0-9].dylib'))
+ffmpeg_dlls += glob.glob(os.path.join(PREFIX, 'lib', 'libavcodec.[0-9][0-9].dylib'))
+ffmpeg_dlls += glob.glob(os.path.join(PREFIX, 'lib', 'libavformat.[0-9][0-9].dylib'))
+
+binaries = [
+    (x, 'lib')
+    for x in ffms2_dlls
+]
+binaries += [
+    (x, '.')
+    for x in ffmpeg_dlls
+]
+
 a = Analysis(['./main.py'],
-            pathex=['./'],
-            binaries=binaries,
-            datas=datas,
-            hiddenimports=['sklearn', 'numpy', 'shapely', 'networkx'],
-            hookspath=['./hooks',],
-            runtime_hooks=None,
-            excludes=None,
-            win_no_prefer_redirects=None,
-            win_private_assemblies=None,
-            cipher=None)
-a.binaries += [("llvmlite/binding/libllvmlite.dylib", os.path.join(site_package_dir, "llvmlite/binding/libllvmlite.dylib"), 'BINARY')]
+        pathex=['./'],
+        binaries=binaries,
+        datas=datas,
+        hiddenimports=['sklearn', 'numpy', 'shapely', 'networkx', 'fractions'],
+        hookspath=['./hooks',],
+        runtime_hooks=None,
+        excludes=None,
+        win_no_prefer_redirects=None,
+        win_private_assemblies=None,
+        cipher=None)
 
 tmp = []
 
@@ -26,7 +44,8 @@ lib_path_list = [
         '/usr/local/Cellar/ffmpeg/',
         '/usr/local/Cellar/x264/',
         '/usr/local/Cellar/lame/',
-        '/usr/local/Cellar/libvo-aacenc/'
+        '/usr/local/Cellar/libvo-aacenc/',
+        '/usr/local/Cellar/geos'
         ]
 
 for lib_path in lib_path_list:
@@ -44,7 +63,6 @@ for lib_path in lib_path_list:
 a.binaries += tmp
 
 pyz = PYZ(a.pure, cipher=None)
-
 exe = EXE(pyz,
         a.scripts,
         a.binaries,
