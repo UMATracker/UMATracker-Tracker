@@ -4,7 +4,6 @@
 import os, sys, six, json, copy
 from itertools import chain
 
-
 if six.PY2:
     reload(sys)
     sys.setdefaultencoding('UTF8')
