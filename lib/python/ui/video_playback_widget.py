@@ -491,7 +491,7 @@ FPS: {3}
     def keyPressEvent(self, e):
         if e.key() == Qt.Key_W or e.key() == Qt.Key_P:
             self.moveNextButtonClicked()
-        if e.key() == Qt.Key_Q or e.key() == Qt.Key_O:
+        elif e.key() == Qt.Key_Q or e.key() == Qt.Key_O:
             self.movePrevButtonClicked()
         else:
             self.playbackSlider.keyPressEvent(e)
