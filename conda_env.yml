@@ -7,6 +7,7 @@ dependencies:
   - ffmpeg
   - geos
   - icu
+  - jasper<2
   - nasm
   - openblas
   - pandas
@@ -14,7 +15,7 @@ dependencies:
   - shapely
   - x264
   - zlib
-  - blas
+  - blas>=1=mkl
   - intel-openmp
   - libgfortran
   - mkl

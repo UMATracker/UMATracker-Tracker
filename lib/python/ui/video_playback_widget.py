@@ -64,8 +64,15 @@ if os.name == 'nt':
         pass
 elif os.name == 'posix':  # FIXME:Linuxだと落ちる．
     logger.debug("OS is MacOS")
+    if os.getenv('CONDA_PREFIX'):
+        FFMS2_PREFIX = os.getenv('CONDA_PREFIX')
+    else:
+        FFMS2_PREFIX = '/usr/local/Cellar/ffms2/*'
     ffms2_path_list = glob.glob(
-        '/usr/local/Cellar/ffms2/*/lib/libffms2.dylib'
+        os.path.join(FFMS2_PREFIX, 'lib', 'libffms2.dylib')
+    )
+    ffms2_path_list += glob.glob(
+        os.path.join(FFMS2_PREFIX, 'lib', 'libffms2.so')
     )
     ffms2_path_list.insert(
         0,
