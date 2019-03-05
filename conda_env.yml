@@ -7,6 +7,7 @@ dependencies:
   - ffmpeg
   - geos
   - icu
+  - jasper<2
   - nasm
   - openblas
   - pandas
