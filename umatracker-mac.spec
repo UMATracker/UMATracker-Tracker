@@ -75,7 +75,7 @@ exe = EXE(pyz,
         strip=None,
         upx=True,
         exclude_binaries=True,
-        console=False, icon='./icon/icon.icns')
+        console=DEBUG_FLAG, icon='./icon/icon.icns')
 
 coll = COLLECT(exe,
         a.scripts,
