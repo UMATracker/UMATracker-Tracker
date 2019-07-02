@@ -73,7 +73,7 @@ exe = EXE(pyz,
         name='UMATracker-Tracking',
         debug=DEBUG_FLAG,
         strip=None,
-        upx=True,
+        upx=False,
         exclude_binaries=True,
         console=False, icon='./icon/icon.icns')
 
@@ -83,7 +83,7 @@ coll = COLLECT(exe,
         a.zipfiles,
         a.datas,
         strip=None,
-        upx=True,
+        upx=False,
         name=os.path.join('dist', 'UMATracker'))
 
 app = BUNDLE(coll,
