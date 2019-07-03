@@ -67,6 +67,8 @@ for lib_path in lib_path_list:
                         )
 a.binaries += tmp
 
+# FIXME: exclude_binaries=TrueかつCI Buildだとなぜかうまく動かない
+# https://github.com/UMATracker/UMATracker-Tracker/issues/9
 pyz = PYZ(a.pure, cipher=None)
 exe = EXE(pyz,
         a.scripts,
