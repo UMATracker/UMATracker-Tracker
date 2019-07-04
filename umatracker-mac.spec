@@ -67,22 +67,18 @@ for lib_path in lib_path_list:
                         )
 a.binaries += tmp
 
-# FIXME: exclude_binaries=TrueかつCI Buildだとなぜかうまく動かない
-# https://github.com/UMATracker/UMATracker-Tracker/issues/9
-pyz = PYZ(a.pure, cipher=None)
+pyz = PYZ(a.pure, a.zipped_data, cipher=None)
 exe = EXE(pyz,
         a.scripts,
-        a.binaries,
-        a.zipfiles,
-        a.datas,
-        a.binaries,
         name='UMATracker-Tracking',
         debug=DEBUG_FLAG,
         strip=None,
         upx=True,
+        exclude_binaries=True,
         console=False, icon='./icon/icon.icns')
 
 coll = COLLECT(exe,
+        a.scripts,
         a.binaries,
         a.zipfiles,
         a.datas,
