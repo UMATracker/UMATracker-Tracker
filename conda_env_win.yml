@@ -14,11 +14,11 @@ dependencies:
   - intel-openmp
   - mkl
   - numpy
-  - opencv
-  - pyqt=5.9.2
-  - python=3.6.5
+  - anaconda::opencv
+  - anaconda::pyqt>=5.9
+  - python>=3.7,<3.8
   - pywin32
-  - qt
+  - anaconda::qt
   - scikit-learn<0.20
   - scipy
   - pip:

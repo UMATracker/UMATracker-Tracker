@@ -19,10 +19,10 @@ dependencies:
   - libgfortran
   - mkl
   - numpy
-  - opencv
-  - pyqt=5.9.2
-  - python=3.6.5
-  - qt
+  - anaconda::opencv
+  - anaconda::pyqt>=5.9
+  - python>=3.7,<3.8
+  - anaconda::qt
   - readline
   - scikit-learn<0.20
   - scipy
