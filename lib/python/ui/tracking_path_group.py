@@ -124,8 +124,8 @@ class TrackingPathGroup(QGraphicsObject):
             self.itemList.index(item)
             for item in self.selectedItemList
             ]
-        array0 = self.df.loc[self.currentFrameNo:, pos0].as_matrix()
-        array1 = self.df.loc[self.currentFrameNo:, pos1].as_matrix()
+        array0 = self.df.loc[self.currentFrameNo:, pos0].values
+        array1 = self.df.loc[self.currentFrameNo:, pos1].values
 
         tmp = array0.copy()
         array0[:, :] = array1
@@ -178,7 +178,7 @@ class TrackingPathGroup(QGraphicsObject):
         for i, item in enumerate(self.itemList):
             # TODO: 内部データ表現を再考する必要あり．
             df = self.df.loc[min_value:max_value, i]
-            array = df.as_matrix()
+            array = df.values
             index = df.index.values.tolist()
 
             pos = None
