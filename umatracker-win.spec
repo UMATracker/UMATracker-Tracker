@@ -99,6 +99,12 @@ for dir_path, dir_names, file_names in os.walk(scipy_dll_path):
 
 a.binaries += tmp
 
+# Override QtWebEngineProcess.exe
+for i, binary in enumerate(a.binaries):
+    if r'QtWebEngineProcess.exe' in binary[1]:
+        a.datas[i] = (r'QtWebEngineProcess.exe', binary[1], 'BINARY')
+        break
+
 pyz = PYZ(a.pure, a.zipped_data, cipher=None)
 
 exe = EXE(pyz,
