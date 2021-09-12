@@ -9,7 +9,7 @@ if os.getenv('UMA_DEBUG') == 'true':
 
 datas = [('./data', 'data'),
         ('./lib/python/tracking_system', 'lib/python/tracking_system'),
-        ('./qt/win/qt.conf', '.')]
+]
 
 a = Analysis(['./main.py'],
         pathex=['./'],
@@ -98,6 +98,11 @@ for dir_path, dir_names, file_names in os.walk(scipy_dll_path):
                     )
 
 a.binaries += tmp
+
+# Override qt.conf
+for i, data in enumerate(a.datas):
+    if data[0] == r'PyQt5\Qt\bin\qt.conf':
+        a.datas[i] = (r'PyQt5\Qt\bin\qt.conf', r'qt\win\qt.conf', 'DATA')
 
 pyz = PYZ(a.pure, a.zipped_data, cipher=None)
 
