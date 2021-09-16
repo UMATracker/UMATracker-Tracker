@@ -486,8 +486,8 @@ class Ui_MainWindow(QMainWindow, Ui_MainWindowBase):
 
         if 'arrow' in attrs:
             for i, arrow_item in enumerate(self.item_dict['arrow']):
-                begin = self.df['position'].loc[self.currentFrameNo, i].as_matrix()
-                end = self.df['arrow'].loc[self.currentFrameNo, i].as_matrix()
+                begin = self.df['position'].loc[self.currentFrameNo, i].values
+                end = self.df['arrow'].loc[self.currentFrameNo, i].values
                 arrow_item.setPosition(begin, end)
 
         if 'path' in attrs:
@@ -548,7 +548,7 @@ class Ui_MainWindow(QMainWindow, Ui_MainWindowBase):
         for key, value in kv.items():
             mul_levs = df[key].index.levels
             for i in mul_levs[0]:
-                value.append(df[key][i].as_matrix())
+                value.append(df[key][i].values)
 
             kv[key] = np.array(value)
 
@@ -709,7 +709,7 @@ class Ui_MainWindow(QMainWindow, Ui_MainWindowBase):
                 for k in self.df.keys():
                     df = self.df[k]
                     prev_data[k] = [
-                        np.copy(df.loc[prev_pos, i].as_matrix())
+                        np.copy(df.loc[prev_pos, i].values)
                         for i in df.columns.levels[0]
                     ]
             else:
